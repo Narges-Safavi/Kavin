@@ -1,3 +1,5 @@
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -29,7 +31,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fa" dir="rtl" className={`${kalameh.variable} h-full antialiased`}>
-      <body className="min-h-full font-sans">{children}</body>
+     <body className="min-h-full font-sans">
+  <Navbar />
+  {children}
+   <Footer />
+</body>
     </html>
   );
 }
