@@ -48,3 +48,11 @@ export const spaceTypeLabels: Record<SpaceType, string> = {
   "shared-desk": "میز مشترک",
   "private-office": "دفتر خصوصی",
 };
+
+export function fetchSpaces(): Promise<Space[]> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(spaces);
+    }, 800);
+  });
+}
