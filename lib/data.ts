@@ -56,3 +56,31 @@ export function fetchSpaces(): Promise<Space[]> {
     }, 800);
   });
 }
+export type Booking = {
+  id: string;
+  spaceId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  guests: number;
+};
+
+export const bookings: Booking[] = [
+  {
+    id: "b1",
+    spaceId: "1",
+    date: "2026-10-25",
+    startTime: "10:00",
+    endTime: "12:00",
+    guests: 3,
+  },
+  {
+    id: "b2",
+    spaceId: "2",
+    date: "2026-10-25",
+    startTime: "14:00",
+    endTime: "16:00",
+    guests: 8,
+  },
+];
+
