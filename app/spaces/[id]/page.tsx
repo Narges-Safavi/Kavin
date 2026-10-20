@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Container from "@/components/ui/Container";
 import Badge from "@/components/ui/Badge";
+import ReservationForm from "@/components/ReservationForm";
 import { spaces, spaceTypeLabels } from "@/lib/data";
 
 type SpaceDetailPageProps = {
@@ -28,6 +29,7 @@ export default async function SpaceDetailPage({
           {space.price.toLocaleString("fa-IR")} تومان
         </span>
       </div>
+      <ReservationForm capacity={space.capacity}/>
     </Container>
   );
 }

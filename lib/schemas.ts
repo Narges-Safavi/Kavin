@@ -1,9 +1,15 @@
+import { getTodayLocal } from "@/lib/date";
 import { z } from "zod";
 
 export function createReservationSchema (capacity: number) {
     return z
         .object({
-      date: z.string().min(1, "تاریخ را وارد کنید"),
+      date: z
+  .string()
+  .min(1, "تاریخ را وارد کنید")
+  .refine((value) => value >= getTodayLocal(), {
+    message: "تاریخ نمی‌تواند در گذشته باشد",
+  }),
       startTime: z.string().min(1, "ساعت شروع را وارد کنید"),
       endTime: z.string().min(1, "ساعت پایان را وارد کنید"),
       guests: z

@@ -7,13 +7,13 @@ export default function Navbar () {
                 <Link href="/" className="text-lg font-bold text-zinc-900">
                 کاوین
                 </Link>
-                <Link href="spaces" className="hover:text-zinc-900">
+                <Link href="/spaces" className="hover:text-zinc-900">
                 فضاها
                 </Link>
-                <Link href="about" className="hover:text-zinc-900">
+                <Link href="/about" className="hover:text-zinc-900">
                 دربارۀ ما
                 </Link>
-                <Link href="contact" className="hover:text-zinc-900">
+                <Link href="/contact" className="hover:text-zinc-900">
                 تماس با ما
                 </Link>
             </nav>
