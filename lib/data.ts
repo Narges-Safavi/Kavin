@@ -83,4 +83,3 @@ export const bookings: Booking[] = [
     guests: 8,
   },
 ];
-
