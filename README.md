@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# کاوین (Kavin)
 
-## Getting Started
+پلتفرم رزرو فضای کار اشتراکی. پروژه‌ی فرانت‌اند کارآموزی، ساخته‌شده با Next.js و TypeScript.
 
-First, run the development server:
+> **وضعیت:** در حال توسعه (هفته ۶ از ۸). داده‌ها آزمایشی (mock) هستند و بک‌اند واقعی هنوز متصل نیست.
+
+## امکانات فعلی
+
+- مشاهده‌ی لیست فضاها (اتاق جلسه، میز مشترک، دفتر خصوصی)
+- جستجو بر اساس نام و فیلتر بر اساس حداقل ظرفیت
+- حالت‌های Loading، Error و نتیجه‌ی خالی
+- صفحه‌ی جزئیات هر فضا
+- فرم رزرو با انتخاب تاریخ (تقویم شمسی)، ساعت شروع و پایان و تعداد نفرات
+- اعتبارسنجی: تاریخ و ساعت گذشته، عدد صحیح، ظرفیت، ساعت پایان بعد از شروع
+- بررسی آزاد بودن فضا با داده‌ی آزمایشی رزروها
+- کارت تاییدیه‌ی رزرو (آزمایشی)
+- رابط فارسی و راست‌به‌چپ (RTL)، ریسپانسیو
+- صفحات عمومی: خانه، درباره ما، تماس با ما، سوالات متداول
+
+## تکنولوژی‌ها
+
+| ابزار | کاربرد |
+|---|---|
+| Next.js (App Router) | ساختار صفحات و مسیریابی |
+| TypeScript | نوع‌دهی داده‌ها |
+| Tailwind CSS | استایل‌دهی |
+| React Hook Form | مدیریت فرم |
+| Zod | قوانین اعتبارسنجی |
+| `@daypicker/react` و `@daypicker/persian` | تقویم شمسی |
+| فونت کلمه (Kalameh) | فونت فارسی |
+
+## اجرای پروژه
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+سپس `http://localhost:3000` را باز کنید.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+اگر `npm install` خطای `ERESOLVE` داد (تعارض نسخه‌ی وابستگی‌های اختیاری):
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install --legacy-peer-deps
+```
 
-## Learn More
+### بررسی کیفیت کد
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run lint
+npx tsc --noEmit
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## ساختار پروژه
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+  page.tsx               صفحه‌ی اصلی
+  about/ contact/ faq/   صفحات عمومی
+  spaces/page.tsx        لیست فضاها + جستجو + فیلتر
+  spaces/[id]/page.tsx   جزئیات فضا + فرم رزرو
+  layout.tsx             قالب کلی: RTL، فونت، Navbar و Footer
+components/
+  ui/                    قطعات عمومی: Button, Input, Card, Badge,
+                         Container, PageHeader, DatePicker
+  Navbar.tsx Footer.tsx  اجزای قالب
+  SpaceCard.tsx          کارت فضا
+  ReservationForm.tsx    فرم رزرو
+  ReservationConfirmation.tsx  تاییدیه‌ی رزرو
+lib/
+  data.ts                نوع‌ها و داده‌ی آزمایشی (فضاها، کاربران، رزروها)
+  availability.ts        بررسی تداخل بازه‌های زمانی
+  schemas.ts             قوانین Zod فرم رزرو
+  date.ts                توابع کمکی تاریخ (به وقت محلی)
+```
 
-## Deploy on Vercel
+## تصمیم‌های طراحی
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **قطعات مشترک:** Button، Input، Card و غیره یک‌بار ساخته شده‌اند تا استایل در چند جا تکرار نشود.
+- **تاریخ:** مقدار داخلی همیشه رشته‌ی میلادی `YYYY-MM-DD` است و برای کاربر شمسی نمایش داده می‌شود. به این ترتیب Zod و بررسی availability مستقل از تقویم نمایشی می‌مانند.
+- **زمان محلی:** تاریخ امروز با `getFullYear/getMonth/getDate` ساخته می‌شود، نه `toISOString()`. دلیل: `toISOString()` در UTC است و بین ۰۰:۰۰ تا ۰۳:۳۰ بامداد ایران تاریخ «دیروز» می‌دهد.
+- **رزرو به فضا و کاربر با شناسه اشاره می‌کند** (`spaceId`، `userId`) و کپی کامل آن‌ها را نگه نمی‌دارد، تا هر اطلاعات فقط یک منبع داشته باشد.
+- **رزرو لغوشده** فضا را اشغال نمی‌کند.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## محدودیت‌های فعلی
+
+- **داده‌ها آزمایشی هستند.** رزروها هنوز ذخیره نمی‌شوند؛ با رفرش صفحه از بین می‌روند.
+- **اعتبارسنجی فقط سمت کاربر (مرورگر) است.** چک «تاریخ گذشته نباشد» از ساعت سیستم کاربر می‌خواند و قابل دور زدن است. در نسخه‌ی واقعی، سرور باید با ساعت خودش و داده‌ی واقعی رزروها دوباره چک کند (از جمله جلوگیری از رزرو هم‌زمان دو نفر).
+- **ساعت** با `input type="time"` بومی مرورگر انتخاب می‌شود. روی گوشی واقعی تست نشده و پنجره‌ی بومی آن در شبیه‌ساز موبایل از کادر بیرون می‌زند.
+- ورود و ثبت‌نام و داشبورد رزروها هنوز ساخته نشده‌اند (هفته ۶). نسخه‌ی اولشان شبیه‌سازی‌شده خواهد بود و امنیت واقعی ندارد.
+- `npm audit` چند هشدار نشان می‌دهد که هنوز بررسی نشده است.
+
+## گام‌های بعدی
+
+- ذخیره‌ی رزروها و اتصال آن‌ها به کاربر
+- ورود و ثبت‌نام، داشبورد و لیست رزروها
+- اتصال به بک‌اند واقعی
+- تست با Playwright، بررسی Accessibility و Performance
+- Deploy
