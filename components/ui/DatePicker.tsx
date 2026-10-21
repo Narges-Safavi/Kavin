@@ -45,7 +45,6 @@ export default function DatePicker({
         id={id}
         type="button"
         aria-expanded={open}
-        aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         onClick={() => setOpen((prev) => !prev)}
         className={`block w-full rounded-lg border px-3 py-2 text-start text-sm sm:text-base ${
