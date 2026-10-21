@@ -1,7 +1,13 @@
+function pad(n: number): string {
+    return String(n).padStart(2,"0");
+}
+
 export function getTodayLocal(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+    const now = new Date();
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+export function getCurrentTimeLocal(): string {
+    const now = new Date();
+    return `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }

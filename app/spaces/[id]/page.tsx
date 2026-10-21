@@ -19,18 +19,20 @@ export default async function SpaceDetailPage({
   }
 
   return (
-    <Container className="max-w-2xl py-10">
-      <Badge variant="info">{spaceTypeLabels[space.type]}</Badge>
-      <h1 className="mt-3 mb-4 text-2xl font-bold">{space.name}</h1>
-      <p className="mb-6 text-zinc-600">{space.description}</p>
-      <div className="flex items-center justify-between rounded-xl border border-zinc-200 p-4">
-        <span>ظرفیت: {space.capacity} نفر</span>
-        <span className="font-medium">
-          {space.price.toLocaleString("fa-IR")} تومان
-        </span>
-      </div>
+    <Container className="py-10">
+      <div className="mx-auto max-w-2xl">
+        <Badge variant="info">{spaceTypeLabels[space.type]}</Badge>
+        <h1 className="mt-3 mb-4 text-2xl font-bold">{space.name}</h1>
+        <p className="mb-6 text-zinc-600">{space.description}</p>
+        <div className="flex items-center justify-between rounded-xl border border-zinc-200 p-4">
+          <span>ظرفیت: {space.capacity} نفر</span>
+          <span className="font-medium">
+            {space.price.toLocaleString("fa-IR")} تومان
+          </span>
+        </div>
 
-      <ReservationForm spaceId={space.id} capacity={space.capacity} />
+        <ReservationForm space={space} />
+      </div>
     </Container>
   );
 }

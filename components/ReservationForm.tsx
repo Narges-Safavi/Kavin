@@ -5,47 +5,60 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import ReservationConfirmation from "@/components/ReservationConfirmation";
 import { isSpaceAvailable } from "@/lib/availability";
+import { Space } from "@/lib/data";
 import {
   createReservationSchema,
   ReservationFormData,
 } from "@/lib/schemas";
 
 type ReservationFormProps = {
-  spaceId: string;
-  capacity: number;
+  space: Space;
 };
 
-export default function ReservationForm({
-  spaceId,
-  capacity,
-}: ReservationFormProps) {
-  const [submitted, setSubmitted] = useState<ReservationFormData | null>(null);
+export default function ReservationForm({ space }: ReservationFormProps) {
+  const [confirmed, setConfirmed] = useState<ReservationFormData | null>(null);
 
   const {
     register,
     handleSubmit,
     setError,
+    reset,
     formState: { errors },
   } = useForm<ReservationFormData>({
-    resolver: zodResolver(createReservationSchema(capacity)),
+    resolver: zodResolver(createReservationSchema(space.capacity)),
   });
 
   function onSubmit(data: ReservationFormData) {
     const available = isSpaceAvailable(
-      spaceId,
+      space.id,
       data.date,
       data.startTime,
       data.endTime
     );
 
     if (!available) {
-      setSubmitted(null);
       setError("root", { message: "این بازه‌ی زمانی قبلاً رزرو شده است." });
       return;
     }
 
-    setSubmitted(data);
+    setConfirmed(data);
+  }
+
+  function handleReset() {
+    reset();
+    setConfirmed(null);
+  }
+
+  if (confirmed) {
+    return (
+      <ReservationConfirmation
+        space={space}
+        booking={confirmed}
+        onReset={handleReset}
+      />
+    );
   }
 
   return (
@@ -86,19 +99,14 @@ export default function ReservationForm({
       />
 
       {errors.root?.message && (
-        <p className="text-sm text-red-600">{errors.root.message}</p>
+        <p role="alert" className="text-sm text-red-600">
+          {errors.root.message}
+        </p>
       )}
 
       <Button type="submit" className="w-full">
         ثبت رزرو
       </Button>
-
-      {submitted && (
-        <p className="text-sm text-green-600">
-          رزرو آزمایشی ثبت شد: {submitted.date} از {submitted.startTime} تا{" "}
-          {submitted.endTime}
-        </p>
-      )}
     </form>
   );
 }

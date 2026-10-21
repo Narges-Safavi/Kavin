@@ -1,8 +1,8 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const kalameh = localFont({
   src: [
@@ -30,12 +30,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fa" dir="rtl" className={`${kalameh.variable} h-full antialiased`}>
-     <body className="min-h-full font-sans">
-  <Navbar />
-  {children}
-   <Footer />
-</body>
+    <html
+      lang="fa"
+      dir="rtl"
+      className={`${kalameh.variable} h-full antialiased`}
+    >
+      <body className="flex min-h-screen flex-col font-sans">
+        <Navbar />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </body>
     </html>
   );
 }

@@ -1,5 +1,5 @@
-import { getTodayLocal } from "@/lib/date";
 import { z } from "zod";
+import { getTodayLocal,getCurrentTimeLocal } from "@/lib/date";
 
 export function createReservationSchema (capacity: number) {
     return z
@@ -22,7 +22,14 @@ export function createReservationSchema (capacity: number) {
             .refine((data) => data.endTime > data.startTime, {
       message: "ساعت پایان باید بعد از ساعت شروع باشد",
       path: ["endTime"],
-            });
+            })
+
+            .refine((data) => data.date !== getTodayLocal() || data.startTime>= getCurrentTimeLocal(),
+              {
+                message: "ساعت شروع نمی‌تواند در گذشته باشد.",
+                path: ["startTime"]
+              }
+            );
 }
 
 export type ReservationFormData = z.infer<
