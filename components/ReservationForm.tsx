@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Input from "@/components/ui/Input";
+import DatePicker from "@/components/ui/DatePicker";
 import Button from "@/components/ui/Button";
 import ReservationConfirmation from "@/components/ReservationConfirmation";
 import { isSpaceAvailable } from "@/lib/availability";
@@ -25,9 +26,11 @@ export default function ReservationForm({ space }: ReservationFormProps) {
     handleSubmit,
     setError,
     reset,
+    control,
     formState: { errors },
   } = useForm<ReservationFormData>({
     resolver: zodResolver(createReservationSchema(space.capacity)),
+    defaultValues: { date: "" },
   });
 
   function onSubmit(data: ReservationFormData) {
@@ -69,12 +72,18 @@ export default function ReservationForm({ space }: ReservationFormProps) {
     >
       <h2 className="text-lg font-semibold">رزرو این فضا</h2>
 
-      <Input
-        id="date"
-        label="تاریخ"
-        type="date"
-        error={errors.date?.message}
-        {...register("date")}
+      <Controller
+        control={control}
+        name="date"
+        render={({ field }) => (
+          <DatePicker
+            id="date"
+            label="تاریخ"
+            value={field.value ?? ""}
+            onChange={field.onChange}
+            error={errors.date?.message}
+          />
+        )}
       />
       <Input
         id="startTime"

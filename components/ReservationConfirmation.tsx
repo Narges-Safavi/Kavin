@@ -25,7 +25,7 @@ return (
     <Card className="mt-6">
         <div className="flex items-center justify-between">
             <h2 className="text-lg font font-semibolds text-zinc-700">
-                تاییدیۀ رزرو
+                تاییدیه‌ی رزرو
             </h2>
             <Badge variant="success">رزرو آزمایشی</Badge>
         </div>
