@@ -17,6 +17,7 @@ export function isSpaceAvailable(
 ): boolean {
   const conflict = bookings.some(
     (booking) =>
+      booking.status === "confirmed" &&
       booking.spaceId === spaceId &&
       booking.date === date &&
       isTimeOverlap(startTime, endTime, booking.startTime, booking.endTime)

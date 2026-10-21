@@ -1,13 +1,14 @@
-export type SpaceType= "meeting-room" | "shared-desk" | "private-office"
+export type SpaceType = "meeting-room" | "shared-desk" | "private-office";
 
-export type Space= {
-    id: string;
-    name: string;
-    type: SpaceType;
-    capacity: number;
-    price: number;
-    description: string;
-}
+export type Space = {
+  id: string;
+  name: string;
+  type: SpaceType;
+  capacity: number;
+  price: number;
+  description: string;
+};
+
 export const spaces: Space[] = [
   {
     id: "1",
@@ -56,30 +57,89 @@ export function fetchSpaces(): Promise<Space[]> {
     }, 800);
   });
 }
+
+// ---------- کاربران (فقط داده‌ی آزمایشی) ----------
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+// رمز فقط برای شبیه‌سازی ورود است و هرگز نباید از lib/auth.ts بیرون برود.
+export type StoredUser = User & {
+  password: string;
+};
+
+export const users: StoredUser[] = [
+  {
+    id: "u1",
+    name: "سارا احمدی",
+    email: "sara@example.com",
+    password: "123456",
+  },
+  {
+    id: "u2",
+    name: "علی رضایی",
+    email: "ali@example.com",
+    password: "123456",
+  },
+];
+
+// ---------- رزروها ----------
+
+export type BookingStatus = "confirmed" | "cancelled";
+
 export type Booking = {
   id: string;
+  userId: string;
   spaceId: string;
   date: string;
   startTime: string;
   endTime: string;
   guests: number;
+  status: BookingStatus;
 };
 
 export const bookings: Booking[] = [
   {
     id: "b1",
+    userId: "u2",
     spaceId: "1",
     date: "2026-10-25",
     startTime: "10:00",
     endTime: "12:00",
     guests: 3,
+    status: "confirmed",
   },
   {
     id: "b2",
+    userId: "u2",
     spaceId: "2",
     date: "2026-10-25",
     startTime: "14:00",
     endTime: "16:00",
     guests: 8,
+    status: "confirmed",
+  },
+  {
+    id: "b3",
+    userId: "u1",
+    spaceId: "3",
+    date: "2026-10-28",
+    startTime: "09:00",
+    endTime: "11:00",
+    guests: 1,
+    status: "cancelled",
+  },
+  {
+    id: "b4",
+    userId: "u1",
+    spaceId: "4",
+    date: "2026-10-10",
+    startTime: "13:00",
+    endTime: "15:00",
+    guests: 2,
+    status: "confirmed",
   },
 ];
