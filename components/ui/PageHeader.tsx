@@ -1,13 +1,15 @@
-type PageHeaderProps = {
-    title: string;
-    description?: string;
-};
-
-export default function PageHeader({title, description} : PageHeaderProps) {
-    return (
-        <div className="mb-8">
-      <h1 className="text-2xl font-bold text-zinc-900">{title}</h1>
-      {description && <p className="mt-2 text-zinc-600">{description}</p>}
-      </div>
-    )
+export default function PageHeader({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="page-header">
+      <span className="eyebrow">فضایی برای بهتر کار کردن</span>
+      <h1>{title}</h1>
+      {description && <p>{description}</p>}
+    </div>
+  );
 }

@@ -1,121 +1,287 @@
 "use client";
-
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Input from "@/components/ui/Input";
-import DatePicker from "@/components/ui/DatePicker";
-import Button from "@/components/ui/Button";
-import ReservationConfirmation from "@/components/ReservationConfirmation";
-import { isSpaceAvailable } from "@/lib/availability";
-import { Space } from "@/lib/data";
+import DatePicker from "./ui/DatePicker";
+import TimePicker from "./ui/TimePicker";
+import Icon from "./ui/Icon";
+import Button from "./ui/Button";
+import { useNow } from "@/lib/use-now";
+import ReservationConfirmation from "./ReservationConfirmation";
 import {
   createReservationSchema,
-  ReservationFormData,
+  type ReservationFormData,
 } from "@/lib/schemas";
-
-type ReservationFormProps = {
-  space: Space;
-};
-
-export default function ReservationForm({ space }: ReservationFormProps) {
-  const [confirmed, setConfirmed] = useState<ReservationFormData | null>(null);
-
+import { type Space, type Booking, bookings as fixtures } from "@/lib/data";
+import { createBooking, useBookings } from "@/lib/booking-store";
+import { isSpaceAvailable } from "@/lib/availability";
+import {
+  formatNumber,
+  formatTime,
+  getBookingTotal,
+  TIME_SLOTS,
+  timeToMinutes,
+} from "@/lib/date";
+export default function ReservationForm({ space }: { space: Space }) {
+  const now = useNow();
+  const [confirmed, setConfirmed] = useState<Booking | null>(null);
+  const saved = useBookings();
+  const all = [...fixtures, ...saved];
   const {
-    register,
     handleSubmit,
+    control,
+    setValue,
     setError,
     reset,
-    control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ReservationFormData>({
     resolver: zodResolver(createReservationSchema(space.capacity)),
-    defaultValues: { date: "" },
+    defaultValues: { date: "", startTime: "", endTime: "", guests: 1 },
   });
-
-  function onSubmit(data: ReservationFormData) {
-    const available = isSpaceAvailable(
-      space.id,
-      data.date,
-      data.startTime,
-      data.endTime
-    );
-
-    if (!available) {
-      setError("root", { message: "این بازه‌ی زمانی قبلاً رزرو شده است." });
-      return;
+  const {
+    date = "",
+    startTime = "",
+    endTime = "",
+    guests = 1,
+  } = useWatch({ control });
+  const total = getBookingTotal(space.price, startTime, endTime);
+  const reserved = all.filter(
+    (booking) =>
+      booking.spaceId === space.id &&
+      booking.date === date &&
+      booking.status === "confirmed",
+  );
+  const disabledStart = TIME_SLOTS.filter(
+    (time, i) =>
+      time === "22:00" ||
+      (date && new Date(`${date}T${time}:00`).getTime() <= now) ||
+      !isSpaceAvailable(space.id, date, time, TIME_SLOTS[i + 1] ?? time, all),
+  );
+  const disabledEnd = TIME_SLOTS.filter(
+    (time) =>
+      time <= startTime ||
+      !startTime ||
+      !isSpaceAvailable(space.id, date, startTime, time, all),
+  );
+  function submit(data: ReservationFormData) {
+    try {
+      setConfirmed(createBooking(space.id, data));
+    } catch (error) {
+      setError("root", {
+        message:
+          error instanceof Error
+            ? error.message
+            : "ثبت رزرو ممکن نشد. دوباره تلاش کنید.",
+      });
     }
-
-    setConfirmed(data);
   }
-
-  function handleReset() {
-    reset();
-    setConfirmed(null);
-  }
-
-  if (confirmed) {
+  if (confirmed)
     return (
       <ReservationConfirmation
         space={space}
         booking={confirmed}
-        onReset={handleReset}
+        onReset={() => {
+          reset();
+          setConfirmed(null);
+        }}
       />
     );
-  }
-
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-      className="mt-6 space-y-4"
-    >
-      <h2 className="text-lg font-semibold">رزرو این فضا</h2>
-
-      <Controller
-        control={control}
-        name="date"
-        render={({ field }) => (
-          <DatePicker
-            id="date"
-            label="تاریخ"
-            value={field.value ?? ""}
-            onChange={field.onChange}
-            error={errors.date?.message}
+    <div className="booking-card">
+      <div className="booking-heading">
+        <span className="eyebrow">جای خودت را رزرو کن</span>
+        <div className="booking-rate">
+          <strong>{formatNumber(space.price)}</strong>
+          <span>
+            تومان <small>/ هر ساعت</small>
+          </span>
+        </div>
+        <p>یک انتخاب ساده، برای یک روز پربار.</p>
+      </div>
+      <form onSubmit={handleSubmit(submit)} noValidate className="booking-form">
+        <Controller
+          name="date"
+          control={control}
+          render={({ field }) => (
+            <DatePicker
+              id="date"
+              label="تاریخ حضورت"
+              value={field.value}
+              onChange={(value) => {
+                field.onChange(value);
+                setValue("startTime", "");
+                setValue("endTime", "");
+              }}
+              error={errors.date?.message}
+            />
+          )}
+        />
+        <div className="time-fields">
+          <Controller
+            name="startTime"
+            control={control}
+            render={({ field }) => (
+              <TimePicker
+                id="startTime"
+                label="از ساعت"
+                value={field.value}
+                onChange={(value) => {
+                  field.onChange(value);
+                  setValue("endTime", "");
+                }}
+                disabledTimes={disabledStart}
+                error={errors.startTime?.message}
+              />
+            )}
           />
+          <Controller
+            name="endTime"
+            control={control}
+            render={({ field }) => (
+              <TimePicker
+                id="endTime"
+                label="تا ساعت"
+                value={field.value}
+                onChange={field.onChange}
+                disabledTimes={disabledEnd}
+                error={errors.endTime?.message}
+              />
+            )}
+          />
+        </div>
+        {date && (
+          <div className="availability-note">
+            {reserved.length ? (
+              <>
+                <Icon name="calendar" size={15} />
+                <span>
+                  بازه‌های رزروشده:{" "}
+                  {reserved
+                    .map(
+                      (item) =>
+                        `${formatTime(item.startTime)} تا ${formatTime(item.endTime)}`,
+                    )
+                    .join("، ")}
+                </span>
+              </>
+            ) : (
+              <>
+                <Icon name="check" size={15} />
+                <span>برای این روز هنوز رزروی ثبت نشده.</span>
+              </>
+            )}
+          </div>
         )}
-      />
-      <Input
-        id="startTime"
-        label="ساعت شروع"
-        type="time"
-        error={errors.startTime?.message}
-        {...register("startTime")}
-      />
-      <Input
-        id="endTime"
-        label="ساعت پایان"
-        type="time"
-        error={errors.endTime?.message}
-        {...register("endTime")}
-      />
-      <Input
-        id="guests"
-        label="تعداد نفرات"
-        type="number"
-        error={errors.guests?.message}
-        {...register("guests", { valueAsNumber: true })}
-      />
-
-      {errors.root?.message && (
-        <p role="alert" className="text-sm text-red-600">
-          {errors.root.message}
+        <div className="field">
+          <label htmlFor="guests">چند نفر هستید؟</label>
+          <Controller
+            name="guests"
+            control={control}
+            render={({ field }) => (
+              <div className="guest-stepper">
+                <span>
+                  <Icon name="users" size={18} />
+                  حداکثر {formatNumber(space.capacity)} نفر
+                </span>
+                <div>
+                  <button
+                    type="button"
+                    aria-label="کاهش تعداد نفرات"
+                    disabled={field.value <= 1}
+                    onClick={() =>
+                      field.onChange(
+                        Math.max(
+                          1,
+                          Number.isFinite(field.value) ? field.value - 1 : 1,
+                        ),
+                      )
+                    }
+                  >
+                    <Icon name="minus" size={15} />
+                  </button>
+                  <input
+                    id="guests"
+                    type="number"
+                    min={1}
+                    max={space.capacity}
+                    step={1}
+                    value={Number.isNaN(field.value) ? "" : field.value}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === "" ? NaN : e.target.valueAsNumber,
+                      )
+                    }
+                    aria-invalid={!!errors.guests}
+                    aria-describedby={
+                      errors.guests ? "guests-error" : undefined
+                    }
+                  />
+                  <button
+                    type="button"
+                    aria-label="افزایش تعداد نفرات"
+                    disabled={field.value >= space.capacity}
+                    onClick={() =>
+                      field.onChange(
+                        Math.min(
+                          space.capacity,
+                          Number.isFinite(field.value) ? field.value + 1 : 1,
+                        ),
+                      )
+                    }
+                  >
+                    <Icon name="plus" size={15} />
+                  </button>
+                </div>
+              </div>
+            )}
+          />
+          {errors.guests && (
+            <p className="field-error" role="alert" id="guests-error">
+              {errors.guests.message}
+            </p>
+          )}
+        </div>
+        <div className="booking-summary">
+          <div>
+            <span>مدت حضور</span>
+            <strong>
+              {total
+                ? `${formatNumber((timeToMinutes(endTime) - timeToMinutes(startTime)) / 60)} ساعت`
+                : "پس از انتخاب ساعت"}
+            </strong>
+          </div>
+          <div>
+            <span>تعداد نفرات</span>
+            <strong>
+              {Number.isFinite(guests) ? formatNumber(guests) : "—"} نفر
+            </strong>
+          </div>
+          <div className="total-row">
+            <span>مبلغ کل</span>
+            <strong>
+              {total ? formatNumber(total) : "—"} <small>تومان</small>
+            </strong>
+          </div>
+        </div>
+        {errors.root?.message && (
+          <div role="alert" className="error-notice">
+            {errors.root.message}
+          </div>
+        )}
+        <Button type="submit" disabled={isSubmitting} className="full-width">
+          {isSubmitting ? "در حال ثبت..." : "تأیید و ثبت رزرو"}
+          <Icon name="arrow" size={18} />
+        </Button>
+        <p className="booking-reassurance">
+          <Icon name="shield" size={15} />
+          بدون پرداخت آنلاین در نسخه نمایشی
         </p>
-      )}
-
-      <Button type="submit" className="w-full">
-        ثبت رزرو
-      </Button>
-    </form>
+      </form>
+      <div className="demo-note">
+        نسخه آموزشی: رزروها فقط در همین مرورگر ذخیره می‌شوند.
+      </div>
+    </div>
   );
 }

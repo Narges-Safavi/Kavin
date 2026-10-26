@@ -7,13 +7,29 @@ import Footer from "@/components/Footer";
 const kalameh = localFont({
   src: [
     { path: "./fonts/KalamehWeb-Thin.woff2", weight: "100", style: "normal" },
-    { path: "./fonts/KalamehWeb-ExtraLight.woff2", weight: "200", style: "normal" },
+    {
+      path: "./fonts/KalamehWeb-ExtraLight.woff2",
+      weight: "200",
+      style: "normal",
+    },
     { path: "./fonts/KalamehWeb-Light.woff2", weight: "300", style: "normal" },
-    { path: "./fonts/KalamehWeb-Regular.woff2", weight: "400", style: "normal" },
+    {
+      path: "./fonts/KalamehWeb-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
     { path: "./fonts/KalamehWeb-Medium.woff2", weight: "500", style: "normal" },
-    { path: "./fonts/KalamehWeb-SemiBold.woff2", weight: "600", style: "normal" },
+    {
+      path: "./fonts/KalamehWeb-SemiBold.woff2",
+      weight: "600",
+      style: "normal",
+    },
     { path: "./fonts/KalamehWeb-Bold.woff2", weight: "700", style: "normal" },
-    { path: "./fonts/KalamehWeb-ExtraBold.woff2", weight: "800", style: "normal" },
+    {
+      path: "./fonts/KalamehWeb-ExtraBold.woff2",
+      weight: "800",
+      style: "normal",
+    },
     { path: "./fonts/KalamehWeb-Black.woff2", weight: "900", style: "normal" },
   ],
   variable: "--font-kalameh",
@@ -33,11 +49,17 @@ export default function RootLayout({
     <html
       lang="fa"
       dir="rtl"
+      data-scroll-behavior="smooth"
       className={`${kalameh.variable} h-full antialiased`}
     >
       <body className="flex min-h-screen flex-col font-sans">
+        <a className="skip-link" href="#main-content">
+          رفتن به محتوای اصلی
+        </a>
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main id="main-content" className="flex-1">
+          {children}
+        </main>
         <Footer />
       </body>
     </html>
