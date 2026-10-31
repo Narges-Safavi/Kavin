@@ -1,28 +1,69 @@
 import Link from "next/link";
-import Card from "@/components/ui/Card";
-import Badge from "@/components/ui/Badge";
-import { Space, spaceTypeLabels } from "@/lib/data";
-
-type SpaceCardProps = {
-  space: Space;
-};
-
-export default function SpaceCard({ space }: SpaceCardProps) {
+import Image from "next/image";
+import { type Space, spaceTypeLabels } from "@/lib/data";
+import { formatNumber } from "@/lib/date";
+import Icon from "./ui/Icon";
+export default function SpaceCard({ space }: { space: Space }) {
   return (
-    <Link href={`/spaces/${space.id}`}>
-      <Card className="h-full transition hover:shadow-md">
-        <Badge variant="info">{spaceTypeLabels[space.type]}</Badge>
-        <h2 className="mt-3 text-lg font-semibold text-zinc-900">
-          {space.name}
-        </h2>
-        <p className="mt-2 text-sm text-zinc-600">{space.description}</p>
-        <div className="mt-4 flex items-center justify-between text-sm">
-          <span>ظرفیت: {space.capacity} نفر</span>
-          <span className="font-medium">
-            {space.price.toLocaleString("fa-IR")} تومان
+    <article className="space-card">
+      <Link
+        href={`/spaces/${space.id}`}
+        className="space-image-link"
+        tabIndex={-1}
+        aria-hidden="true"
+      >
+        <Image
+          src={space.image}
+          alt=""
+          fill
+          loading="eager"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        />
+        <span className="photo-badge">{spaceTypeLabels[space.type]}</span>
+      </Link>
+      <div className="space-card-body">
+        <div className="space-card-tag">
+          <i />
+          {space.tag}
+        </div>
+        <h3>
+          <Link href={`/spaces/${space.id}`}>{space.name}</Link>
+        </h3>
+        <p className="space-location">
+          <Icon name="pin" size={15} />
+          {space.location}
+        </p>
+        <div className="space-facts">
+          <span>
+            <Icon name="users" size={16} />
+            تا {formatNumber(space.capacity)} نفر
+          </span>
+          <span>
+            <Icon name="wifi" size={16} />
+            اینترنت پرسرعت
+          </span>
+          <span>
+            <Icon name="coffee" size={16} />
+            قهوه
           </span>
         </div>
-      </Card>
-    </Link>
+        <div className="space-card-bottom">
+          <div>
+            <strong>{formatNumber(space.price)}</strong>
+            <span>
+              {" "}
+              تومان <small>/ ساعت</small>
+            </span>
+          </div>
+          <Link
+            className="circle-link"
+            href={`/spaces/${space.id}`}
+            aria-label={`مشاهده ${space.name}`}
+          >
+            <Icon name="arrow" size={19} />
+          </Link>
+        </div>
+      </div>
+    </article>
   );
 }

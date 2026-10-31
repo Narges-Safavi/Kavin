@@ -1,5 +1,4 @@
 export type SpaceType = "meeting-room" | "shared-desk" | "private-office";
-
 export type Space = {
   id: string;
   name: string;
@@ -7,89 +6,86 @@ export type Space = {
   capacity: number;
   price: number;
   description: string;
+  image: string;
+  location: string;
+  area: number;
+  amenities: string[];
+  tag: string;
 };
-
 export const spaces: Space[] = [
   {
     id: "1",
-    name: "اتاق جلسات کوچک",
+    name: "اتاق جلسه آفتاب",
     type: "meeting-room",
     capacity: 4,
     price: 350000,
-    description: "اتاقی آرام و مناسب برای جلسات تیمی کوچک.",
+    description:
+      "یک فضای روشن برای فکرهای بزرگ. اتاقی آرام با نور طبیعی، میز جلسه و تمام چیزهایی که برای یک گفت‌وگوی سازنده نیاز دارید.",
+    image: "/images/meeting.jpg",
+    location: "طبقه اول، ضلع شرقی",
+    area: 22,
+    amenities: ["اینترنت پرسرعت", "نمایشگر", "وایت‌برد", "پذیرایی چای و قهوه"],
+    tag: "مناسب جلسات تیمی",
   },
   {
     id: "2",
-    name: "اتاق جلسات بزرگ",
+    name: "اتاق جلسه افق",
     type: "meeting-room",
     capacity: 10,
     price: 700000,
-    description: "مناسب برای جلسات بزرگ‌تر و ارائه‌های تیمی.",
+    description:
+      "کنار هم، ایده‌ها بزرگ‌تر می‌شوند. فضای مجهز و دلباز برای ارائه، جلسه‌های تیمی و تصمیم‌هایی که به یک میز بزرگ نیاز دارند.",
+    image: "/images/conference.jpg",
+    location: "طبقه دوم، ضلع غربی",
+    area: 40,
+    amenities: ["اینترنت پرسرعت", "نمایشگر", "وایت‌برد", "پذیرایی چای و قهوه"],
+    tag: "برای تیم‌های بزرگ‌تر",
   },
   {
     id: "3",
-    name: "میز کار مشترک",
+    name: "میز کار هم‌نشین",
     type: "shared-desk",
     capacity: 1,
     price: 150000,
-    description: "یک صندلی در فضای کار اشتراکی برای کار فردی.",
+    description:
+      "جای خودت را میان آدم‌های خلاق پیدا کن. یک میز راحت در فضای مشترک، برای چند ساعت تمرکز و یک روز کاری متفاوت.",
+    image: "/images/shared.jpg",
+    location: "همکف، سالن مشترک",
+    area: 8,
+    amenities: [
+      "اینترنت پرسرعت",
+      "پریز اختصاصی",
+      "صندلی ارگونومیک",
+      "پذیرایی چای و قهوه",
+    ],
+    tag: "برای تمرکز و خلق کردن",
   },
   {
     id: "4",
-    name: "دفتر کار خصوصی",
+    name: "دفتر خصوصی سرو",
     type: "private-office",
     capacity: 3,
     price: 950000,
-    description: "دفتر اختصاصی و مجزا برای تیم‌های کوچک.",
+    description:
+      "آرامش یک دفتر شخصی، در دل یک جمع پویا. فضای مستقل و مجهز برای کار عمیق، همکاری نزدیک و روزهای پربازده تیم شما.",
+    image: "/images/private.jpg",
+    location: "طبقه دوم، ضلع شرقی",
+    area: 28,
+    amenities: [
+      "اینترنت پرسرعت",
+      "حریم خصوصی",
+      "صندلی ارگونومیک",
+      "پذیرایی چای و قهوه",
+    ],
+    tag: "آرام و مستقل",
   },
 ];
-
 export const spaceTypeLabels: Record<SpaceType, string> = {
   "meeting-room": "اتاق جلسه",
-  "shared-desk": "میز مشترک",
+  "shared-desk": "میز اشتراکی",
   "private-office": "دفتر خصوصی",
 };
-
-export function fetchSpaces(): Promise<Space[]> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(spaces);
-    }, 800);
-  });
-}
-
-// ---------- کاربران (فقط داده‌ی آزمایشی) ----------
-
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-};
-
-// رمز فقط برای شبیه‌سازی ورود است و هرگز نباید از lib/auth.ts بیرون برود.
-export type StoredUser = User & {
-  password: string;
-};
-
-export const users: StoredUser[] = [
-  {
-    id: "u1",
-    name: "سارا احمدی",
-    email: "sara@example.com",
-    password: "123456",
-  },
-  {
-    id: "u2",
-    name: "علی رضایی",
-    email: "ali@example.com",
-    password: "123456",
-  },
-];
-
-// ---------- رزروها ----------
-
 export type BookingStatus = "confirmed" | "cancelled";
-
 export type Booking = {
   id: string;
   userId: string;
@@ -99,47 +95,10 @@ export type Booking = {
   endTime: string;
   guests: number;
   status: BookingStatus;
+  total: number;
+  createdAt: string;
 };
-
-export const bookings: Booking[] = [
-  {
-    id: "b1",
-    userId: "u2",
-    spaceId: "1",
-    date: "2026-10-25",
-    startTime: "10:00",
-    endTime: "12:00",
-    guests: 3,
-    status: "confirmed",
-  },
-  {
-    id: "b2",
-    userId: "u2",
-    spaceId: "2",
-    date: "2026-10-25",
-    startTime: "14:00",
-    endTime: "16:00",
-    guests: 8,
-    status: "confirmed",
-  },
-  {
-    id: "b3",
-    userId: "u1",
-    spaceId: "3",
-    date: "2026-10-28",
-    startTime: "09:00",
-    endTime: "11:00",
-    guests: 1,
-    status: "cancelled",
-  },
-  {
-    id: "b4",
-    userId: "u1",
-    spaceId: "4",
-    date: "2026-10-10",
-    startTime: "13:00",
-    endTime: "15:00",
-    guests: 2,
-    status: "confirmed",
-  },
-];
+export const bookings: Booking[] = [];
+export async function fetchSpaces(): Promise<Space[]> {
+  return spaces;
+}

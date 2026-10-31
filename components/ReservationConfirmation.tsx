@@ -1,73 +1,63 @@
 "use client";
-
-import Card from "./ui/Card";
-import Badge from "./ui/Badge";
+import Link from "next/link";
+import type { Space, Booking } from "@/lib/data";
+import { formatNumber, formatPersianDate, formatTime } from "@/lib/date";
+import Icon from "./ui/Icon";
 import Button from "./ui/Button";
-import { Space } from "@/lib/data";
-import { ReservationFormData } from "@/lib/schemas";
-
-type ReservationConfirmationProps = {
-    space: Space;
-    booking: ReservationFormData;
-    onReset: () => void;
-}
 export default function ReservationConfirmation({
-    space,
-    booking,
-    onReset,
-}: ReservationConfirmationProps) {
-    const displayDate = new Date (`${booking.date}T00:00`).toLocaleDateString(
-        "fa-IR"
-    );
-
-
-return (
-    <Card className="mt-6">
-        <div className="flex items-center justify-between">
-            <h2 className="text-lg font font-semibolds text-zinc-700">
-                تاییدیه‌ی رزرو
-            </h2>
-            <Badge variant="success">رزرو آزمایشی</Badge>
-        </div>
-    
-     <dl className="mt-4 space-y-2 text-sm text-zinc-700">
-        <div className="flex justify-between">
+  space,
+  booking,
+  onReset,
+}: {
+  space: Space;
+  booking: Booking;
+  onReset: () => void;
+}) {
+  return (
+    <div className="booking-card confirmation">
+      <div className="success-seal">
+        <Icon name="check" size={34} />
+      </div>
+      <span className="eyebrow">جای شما آماده است</span>
+      <h2>رزروت ثبت شد!</h2>
+      <p>منتظر یک روز کاری خوب باش.</p>
+      <span className="booking-reference">
+        شناسه رزرو: <bdi>{booking.id.slice(0, 8).toUpperCase()}</bdi>
+      </span>
+      <dl>
+        <div>
           <dt>فضا</dt>
-          <dd className="font-medium">{space.name}</dd>
+          <dd>{space.name}</dd>
         </div>
-        <div className="flex justify-between">
+        <div>
           <dt>تاریخ</dt>
-          <dd className="font-medium">{displayDate}</dd>
+          <dd>{formatPersianDate(booking.date, true)}</dd>
         </div>
-        <div className="flex justify-between">
+        <div>
           <dt>ساعت</dt>
-          <dd className="font-medium">
-            {booking.startTime} تا {booking.endTime}
+          <dd>
+            {formatTime(booking.startTime)} تا {formatTime(booking.endTime)}
           </dd>
         </div>
-        <div className="flex justify-between">
+        <div>
           <dt>تعداد نفرات</dt>
-          <dd className="font-medium">
-            {booking.guests.toLocaleString("fa-IR")} نفر
-          </dd>
+          <dd>{formatNumber(booking.guests)} نفر</dd>
         </div>
-        <div className="flex justify-between">
-          <dt>قیمت</dt>
-          <dd className="font-medium">
-            {space.price.toLocaleString("fa-IR")} تومان
-          </dd>
+        <div className="total-row">
+          <dt>مبلغ کل</dt>
+          <dd>{formatNumber(booking.total)} تومان</dd>
         </div>
       </dl>
-
-      <p className="mt-4 text-xs text-zinc-500">
-        این یک رزرو آزمایشی است و در جایی ذخیره نمی‌شود.
-      </p>
-
-      <Button variant="secondary" className="mt-4 w-full" onClick={onReset}>
-        ثبت رزرو دیگر
+      <Link href="/bookings" className="button button-primary full-width">
+        مشاهده رزروهای من
+        <Icon name="arrow" size={18} />
+      </Link>
+      <Button variant="ghost" className="full-width" onClick={onReset}>
+        ثبت یک رزرو دیگر
       </Button>
-    
-    </Card>
-
-)
+      <p className="demo-note">
+        رزرو نمایشی در همین مرورگر ذخیره شده؛ نیازی به پرداخت نیست.
+      </p>
+    </div>
+  );
 }

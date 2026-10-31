@@ -1,12 +1,9 @@
-type ContainerProps = {
-    children: React.ReactNode;
-    className?: string;
-};
-
-export default function Contain({children,className} :ContainerProps) {
-    return ( 
-    <div className={`mx-auto w-full max-w-5xl px-4 ${className ?? ""}`}>
-      {children}
-      </div>
-    );
+export default function Container({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={`container ${className}`}>{children}</div>;
 }
