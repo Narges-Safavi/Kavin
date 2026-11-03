@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Container from "@/components/ui/Container";
 import PageHeader from "@/components/ui/PageHeader";
 import LoginForm from "@/components/LoginForm";
@@ -10,6 +11,9 @@ export default function LoginPage() {
         description="برای دیدن رزروهایت وارد حساب کاربری شو."
       />
       <LoginForm />
+      <p>
+        حساب نداری؟ <Link href="/signup">ثبت‌نام</Link>
+      </p>
     </Container>
   );
 }

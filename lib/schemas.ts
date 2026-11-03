@@ -65,3 +65,16 @@ export const loginSchema = z.object({
   password: z.string().min(6, "رمز حداقل ۶ کاراکتر است."),
 });
 export type LoginFormData = z.infer<typeof loginSchema>;
+
+export const signupSchema = z
+  .object({
+    name: z.string().min(2, "نام حداقل ۲ کاراکتر است."),
+    email: z.string().email("لطفا ایمیل معتبر وارد کنید."),
+    password: z.string().min(6, "رمز حداقل ۶ کاراکتر است."),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "رمزها یکسان نیستند.",
+    path: ["confirmPassword"],
+  });
+export type SignupFormData = z.infer<typeof signupSchema>;
