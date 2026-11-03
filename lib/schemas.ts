@@ -59,3 +59,9 @@ export function createReservationSchema(capacity: number) {
 export type ReservationFormData = z.infer<
   ReturnType<typeof createReservationSchema>
 >;
+
+export const loginSchema = z.object({
+  email: z.string().email("لطفا ایمیل معتبر وارد کنید."),
+  password: z.string().min(6, "رمز حداقل ۶ کاراکتر است."),
+});
+export type LoginFormData = z.infer<typeof loginSchema>;
