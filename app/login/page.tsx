@@ -12,6 +12,9 @@ export default function LoginPage() {
       />
       <LoginForm />
       <p>
+        <Link href="/forgot-password">رمزت را فراموش کرده‌ای؟</Link>
+      </p>
+      <p>
         حساب نداری؟ <Link href="/signup">ثبت‌نام</Link>
       </p>
     </Container>
