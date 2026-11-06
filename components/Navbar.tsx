@@ -7,6 +7,7 @@ const links = [
   { href: "/", label: "خانه" },
   { href: "/spaces", label: "فضاهای کاری" },
   { href: "/about", label: "داستان کاوین" },
+  { href: "/login", label: "ورود" },
   { href: "/faq", label: "سؤال‌های شما" },
 ];
 export default function Navbar() {
