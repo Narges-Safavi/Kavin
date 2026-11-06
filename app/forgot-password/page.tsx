@@ -1,21 +1,18 @@
 import Link from "next/link";
 import Container from "@/components/ui/Container";
 import PageHeader from "@/components/ui/PageHeader";
-import LoginForm from "@/components/LoginForm";
+import ForgotPasswordForm from "@/components/ForgotPasswordForm";
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   return (
     <Container className="content-page">
       <PageHeader
-        title="به کاوین خوش آمدی."
-        description="برای دیدن رزروهایت وارد حساب کاربری شو."
+        title="رمزت را فراموش کرده‌ای؟"
+        description="ایمیلت را وارد کن تا لینک بازیابی برایت ارسال شود."
       />
-      <LoginForm />
+      <ForgotPasswordForm />
       <p>
-        <Link href="/forgot-password">رمزت را فراموش کرده‌ای؟</Link>
-      </p>
-      <p>
-        حساب نداری؟ <Link href="/signup">ثبت‌نام</Link>
+        <Link href="/login">بازگشت به ورود</Link>
       </p>
     </Container>
   );
