@@ -1,4 +1,8 @@
-import type { LoginFormData, SignupFormData } from "@/lib/schemas";
+import type {
+  ForgotPasswordFormData,
+  LoginFormData,
+  SignupFormData,
+} from "@/lib/schemas";
 
 // فعلاً بک‌اند نداریم. وقتی API آماده شد، فقط داخل این توابع عوض می‌شود.
 export async function login(data: LoginFormData): Promise<void> {
@@ -9,4 +13,10 @@ export async function login(data: LoginFormData): Promise<void> {
 export async function signUp(data: SignupFormData): Promise<void> {
   void data;
   throw new Error("ثبت‌نام پس از اتصال به سرور فعال می‌شود.");
+}
+
+export async function requestPasswordReset(
+  data: ForgotPasswordFormData,
+): Promise<void> {
+  void data;
 }
