@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     "playwright-report/**",
     "test-results/**",
     "qa/**",
+    // Python backend (includes the virtualenv with third-party JS files)
+    "backend/**",
   ]),
 ]);
 
