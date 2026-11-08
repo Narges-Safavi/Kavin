@@ -3,15 +3,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Icon from "./ui/Icon";
+
 const links = [
   { href: "/", label: "خانه" },
   { href: "/spaces", label: "فضاهای کاری" },
   { href: "/about", label: "داستان کاوین" },
   { href: "/faq", label: "سؤال‌های شما" },
+  { href: "/login", label: "ورود" },
+  { href: "/signup", label: "ثبت‌نام" },
 ];
+
 export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
   return (
     <header className="site-header">
       <div className="container nav-bar">
