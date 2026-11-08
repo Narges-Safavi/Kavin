@@ -1,17 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { spaces, spaceTypeLabels } from "@/lib/data";
+import { spaceTypeLabels } from "@/lib/data";
+import { getSpace } from "@/lib/spaces";
 import { formatNumber } from "@/lib/date";
 import ReservationForm from "@/components/ReservationForm";
 import Container from "@/components/ui/Container";
 import Icon, { type IconName } from "@/components/ui/Icon";
 
-// Pre-render the small demo catalog. Revisit this when spaces come from an API.
-export const dynamicParams = false;
-export function generateStaticParams() {
-  return spaces.map((space) => ({ id: space.id }));
-}
+// فضاها از API می‌آیند، پس صفحه هر بار تازه ساخته می‌شود.
+export const dynamic = "force-dynamic";
 
 export default async function SpaceDetailPage({
   params,
@@ -19,7 +17,7 @@ export default async function SpaceDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const space = spaces.find((item) => item.id === id);
+  const space = await getSpace(id);
   if (!space) notFound();
   const amenityIcons: IconName[] = [
     "wifi",

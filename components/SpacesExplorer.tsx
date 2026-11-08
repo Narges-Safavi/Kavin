@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
-import { spaces, spaceTypeLabels, type SpaceType } from "@/lib/data";
+import { spaceTypeLabels, type Space, type SpaceType } from "@/lib/data";
 import SpaceCard from "./SpaceCard";
 import Icon from "./ui/Icon";
 import Button from "./ui/Button";
 import { formatNumber } from "@/lib/date";
-export default function SpacesExplorer() {
+export default function SpacesExplorer({ spaces }: { spaces: Space[] }) {
   const [search, setSearch] = useState("");
   const [type, setType] = useState<SpaceType | "all">("all");
   const [capacity, setCapacity] = useState(0);
