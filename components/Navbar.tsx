@@ -1,21 +1,56 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Icon from "./ui/Icon";
+import { fetchCurrentUser, logout, type AuthUser } from "@/lib/auth";
 
 const links = [
   { href: "/", label: "خانه" },
   { href: "/spaces", label: "فضاهای کاری" },
   { href: "/about", label: "داستان کاوین" },
   { href: "/faq", label: "سؤال‌های شما" },
+];
+
+const guestLinks = [
   { href: "/login", label: "ورود" },
   { href: "/signup", label: "ثبت‌نام" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  // undefined: هنوز نمی‌دانیم، null: مهمان، AuthUser: وارد شده
+  const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
+
+  // با هر تغییر صفحه (مثلاً بعد از ورود) دوباره می‌پرسیم کاربر کیست.
+  useEffect(() => {
+    let cancelled = false;
+    fetchCurrentUser()
+      .then((current) => {
+        if (!cancelled) setUser(current);
+      })
+      .catch(() => {
+        if (!cancelled) setUser(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
+  async function handleLogout() {
+    try {
+      await logout();
+    } catch {
+      // اگر خطا شد، در پرسش بعدی از سرور وضعیت واقعی دوباره معلوم می‌شود.
+    }
+    setUser(null);
+    setOpen(false);
+    router.push("/");
+  }
+
+  const navLinks = user === null ? [...links, ...guestLinks] : links;
 
   return (
     <header className="site-header">
@@ -34,7 +69,7 @@ export default function Navbar() {
           aria-label="ناوبری اصلی"
           className={`nav-links ${open ? "is-open" : ""}`}
         >
-          {links.map((link) => (
+          {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -58,6 +93,20 @@ export default function Navbar() {
             <Icon name="calendar" size={17} />
             رزروهای من
           </Link>
+          {user && (
+            <>
+              <span className="nav-user" dir="auto">
+                {user.username}
+              </span>
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={handleLogout}
+              >
+                خروج
+              </button>
+            </>
+          )}
           <button
             type="button"
             className="icon-button mobile-menu"
