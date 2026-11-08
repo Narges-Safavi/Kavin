@@ -2245,3 +2245,7 @@ fieldset > legend {
   top: -100px;
   clip-path: inset(50%);
 }
+/* فاصله‌ی دکمه‌ی ارسال از آخرین فیلد فرم‌ها */
+form.card > button:last-child {
+  margin-top: 1.25rem;
+}
