@@ -86,6 +86,11 @@ export default function Navbar() {
           ))}
         </nav>
         <div className="nav-actions">
+          {user && (
+            <span className="nav-user" dir="auto">
+              {user.username}
+            </span>
+          )}
           <Link
             className="button button-secondary nav-bookings"
             href="/bookings"
@@ -94,18 +99,13 @@ export default function Navbar() {
             رزروهای من
           </Link>
           {user && (
-            <>
-              <span className="nav-user" dir="auto">
-                {user.username}
-              </span>
-              <button
-                type="button"
-                className="button button-secondary"
-                onClick={handleLogout}
-              >
-                خروج
-              </button>
-            </>
+            <button
+              type="button"
+              className="button button-secondary"
+              onClick={handleLogout}
+            >
+              خروج
+            </button>
           )}
           <button
             type="button"
