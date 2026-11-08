@@ -1,7 +1,13 @@
 import Container from "@/components/ui/Container";
 import PageHeader from "@/components/ui/PageHeader";
 import SpacesExplorer from "@/components/SpacesExplorer";
-export default function SpacesPage() {
+import { getSpaces } from "@/lib/spaces";
+
+// فضاها از API می‌آیند، پس صفحه هر بار تازه ساخته می‌شود.
+export const dynamic = "force-dynamic";
+
+export default async function SpacesPage() {
+  const spaces = await getSpaces();
   return (
     <>
       <div className="page-top">
@@ -13,7 +19,7 @@ export default function SpacesPage() {
         </Container>
       </div>
       <Container className="section explorer-section">
-        <SpacesExplorer />
+        <SpacesExplorer spaces={spaces} />
       </Container>
     </>
   );
