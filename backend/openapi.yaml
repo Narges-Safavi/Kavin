@@ -129,13 +129,13 @@ paths:
       - name: page
         required: false
         in: query
-        description: A page number within the paginated result set.
+        description: یک شماره صفحه‌ در مجموعه نتایج صفحه‌بندی شده.
         schema:
           type: integer
       - name: pageSize
         required: false
         in: query
-        description: Number of results to return per page.
+        description: تعداد نتایج برای نمایش در هر صفحه.
         schema:
           type: integer
       - in: query
@@ -716,8 +716,9 @@ components:
       properties:
         username:
           type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
+          title: نام کاربری
+          description: الزامی. 150 کاراکتر یا کمتر. فقط شامل حروف، اعداد، و علامات
+            @/./+/-/_
           pattern: ^[\w.@+-]+$
           maxLength: 150
         email:
@@ -843,12 +844,13 @@ components:
           readOnly: true
         username:
           type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
+          title: نام کاربری
+          description: الزامی. 150 کاراکتر یا کمتر. فقط شامل حروف، اعداد، و علامات
+            @/./+/-/_
           pattern: ^[\w.@+-]+$
           maxLength: 150
         email:
-          title: Email address
+          title: آدرس ایمیل
           oneOf:
           - type: string
             format: email

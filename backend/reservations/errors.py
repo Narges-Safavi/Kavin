@@ -1,3 +1,4 @@
+from django.http import Http404
 from rest_framework import exceptions
 from rest_framework.views import exception_handler as drf_handler
 
@@ -15,6 +16,12 @@ class CancellationClosed(exceptions.APIException):
 
 
 def exception_handler(exc, context):
+    if isinstance(exc, Http404):
+        # Django's get_object_or_404 includes an untranslated model name.
+        exc = exceptions.NotFound("مورد درخواستی پیدا نشد.")
+    elif isinstance(exc, exceptions.ParseError):
+        # Parsers can include untranslated decoder errors in the detail.
+        exc = exceptions.ParseError("ساختار داده‌های ارسالی معتبر نیست.")
     response = drf_handler(exc, context)
     if response is None:
         return None

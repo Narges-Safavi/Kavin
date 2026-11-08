@@ -53,11 +53,13 @@ else:
         "OPTIONS": {"timeout": 15, "transaction_mode": "IMMEDIATE"},
         "TEST": {"NAME": BASE_DIR / "test_kavin.sqlite3"} if os.getenv("KAVIN_TEST_SQLITE_FILE") == "1" else {},
     }}
-AUTH_PASSWORD_VALIDATORS = [{"NAME": "django.contrib.auth.password_validation." + name} for name in (
-    "UserAttributeSimilarityValidator", "MinimumLengthValidator",
-    "CommonPasswordValidator", "NumericPasswordValidator",
-)]
-LANGUAGE_CODE = "en-us"
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "reservations.password_validation.PersianMinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+LANGUAGE_CODE = "fa"
 TIME_ZONE = "Asia/Tehran"
 USE_TZ = True
 STATIC_URL = "/static/"

@@ -138,6 +138,45 @@ class AuthApiTests(APITestCase):
         self.assertNotIn("Access-Control-Allow-Origin", denied.headers)
 
 
+class PersianApiErrorsTests(APITestCase):
+    def test_registration_errors_are_persian(self):
+        User.objects.create_user(username="existing-member")
+        response = self.client.post(
+            reverse("register"),
+            {"username": "existing-member", "password": "long-demo-pass!741", "email": "invalid"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["code"], "validation_error")
+        for field in ("username", "email"):
+            self.assertRegex(response.data["errors"][field][0], r"[آ-ی]")
+        response = self.client.post(
+            reverse("register"), {"username": "new-member", "password": "x!z"}, format="json",
+        )
+        self.assertIn("رمز عبور خیلی کوتاه است", response.data["errors"]["password"][0])
+
+    def test_login_and_api_errors_are_persian(self):
+        login = reverse("login")
+        space = reverse("space-detail", args=[999])
+        cases = (
+            (self.client.post(login, {}, format="json"), 400, "validation_error"),
+            (self.client.post(login, "{", content_type="application/json"), 400, "parse_error"),
+            (self.client.post(login, "text", content_type="text/plain"), 415, "unsupported_media_type"),
+            (self.client.get(login), 405, "method_not_allowed"),
+            (self.client.get(space), 404, "not_found"),
+            (self.client.get(reverse("me")), 401, "not_authenticated"),
+            (self.client.get(reverse("me"), HTTP_AUTHORIZATION="Token invalid"), 401, "authentication_failed"),
+            (self.client.get(reverse("spaces"), {"type": "invalid"}), 400, "validation_error"),
+        )
+        for response, status_code, code in cases:
+            with self.subTest(code=code):
+                self.assertEqual((response.status_code, response.data["code"]), (status_code, code))
+                self.assertRegex(response.data["detail"], r"[آ-ی]")
+        self.assertEqual(cases[4][0].data["detail"], "مورد درخواستی پیدا نشد.")
+        self.assertRegex(cases[0][0].data["errors"]["username"][0], r"[آ-ی]")
+        self.assertRegex(cases[-1][0].data["errors"]["type"][0], r"[آ-ی]")
+
+
 class RaceTests(TransactionTestCase):
     fixtures = ["spaces.json"]
 
