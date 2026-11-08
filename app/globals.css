@@ -2245,7 +2245,34 @@ fieldset > legend {
   top: -100px;
   clip-path: inset(50%);
 }
-/* فاصله‌ی دکمه‌ی ارسال از آخرین فیلد فرم‌ها */
+/* فرم‌های کارتی: همه‌ی فاصله‌ها یک‌اندازه و قرینه */
+form.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+form.card > * {
+  margin: 0;
+}
+/* هر فیلد: برچسب، ورودی، پیام خطا */
+form.card .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+form.card .field > * {
+  margin: 0;
+}
+/* کادر فوکوس نزدیک‌تر به فیلد، تا به پیام خطا نرسد */
+form.card .input:focus-visible {
+  outline-offset: 2px;
+}
+/* دکمه کش نیاید و همون جای قبلی بماند */
 form.card > button:last-child {
-  margin-top: 1.25rem;
+  align-self: flex-start;
+}
+/* نام کاربری کنار دکمه‌ی خروج در ناوبار */
+.nav-user {
+  font-weight: 600;
+  white-space: nowrap;
 }

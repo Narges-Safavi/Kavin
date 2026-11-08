@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Input from "./ui/Input";
@@ -9,7 +9,7 @@ import { login } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 
 export default function LoginForm() {
-  const [success, setSuccess] = useState("");
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -21,11 +21,9 @@ export default function LoginForm() {
   });
 
   async function submit(data: LoginFormData) {
-    setSuccess("");
     try {
-      const result = await login(data);
-      // موقت: در مرحله‌ی ب۲ توکن را ذخیره می‌کنیم و کاربر را هدایت می‌کنیم.
-      setSuccess(`خوش آمدی ${result.user.username}!`);
+      await login(data);
+      router.push("/");
     } catch (error) {
       if (error instanceof ApiError) {
         const fieldErrors = error.errors;
@@ -62,7 +60,6 @@ export default function LoginForm() {
           {errors.root.message}
         </div>
       )}
-      {success && <div role="status">{success}</div>}
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "در حال ورود..." : "ورود"}
       </Button>
