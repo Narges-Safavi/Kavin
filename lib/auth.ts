@@ -1,20 +1,40 @@
+import { apiRequest } from "@/lib/api";
 import type {
   ForgotPasswordFormData,
   LoginFormData,
   SignupFormData,
 } from "@/lib/schemas";
 
-// فعلاً بک‌اند نداریم. وقتی API آماده شد، فقط داخل این توابع عوض می‌شود.
-export async function login(data: LoginFormData): Promise<void> {
-  void data;
-  throw new Error("ورود پس از اتصال به سرور فعال می‌شود.");
+export type AuthUser = {
+  id: string;
+  username: string;
+  email: string;
+};
+
+export type AuthResponse = {
+  token: string;
+  user: AuthUser;
+};
+
+export async function login(data: LoginFormData): Promise<AuthResponse> {
+  return apiRequest<AuthResponse>("/auth/login/", {
+    method: "POST",
+    body: { username: data.username, password: data.password },
+  });
 }
 
-export async function signUp(data: SignupFormData): Promise<void> {
-  void data;
-  throw new Error("ثبت‌نام پس از اتصال به سرور فعال می‌شود.");
+export async function signUp(data: SignupFormData): Promise<AuthResponse> {
+  return apiRequest<AuthResponse>("/auth/register/", {
+    method: "POST",
+    body: {
+      username: data.username,
+      password: data.password,
+      ...(data.email ? { email: data.email } : {}),
+    },
+  });
 }
 
+// بک‌اند فعلاً بازیابی رمز ندارد؛ این تابع دست‌نخورده می‌ماند.
 export async function requestPasswordReset(
   data: ForgotPasswordFormData,
 ): Promise<void> {
