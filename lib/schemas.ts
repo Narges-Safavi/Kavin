@@ -61,15 +61,18 @@ export type ReservationFormData = z.infer<
 >;
 
 export const loginSchema = z.object({
-  email: z.string().email("لطفا ایمیل معتبر وارد کنید."),
-  password: z.string().min(6, "رمز حداقل ۶ کاراکتر است."),
+  username: z.string().min(1, "نام کاربری را وارد کنید."),
+  password: z.string().min(1, "رمز را وارد کنید."),
 });
 export type LoginFormData = z.infer<typeof loginSchema>;
 
 export const signupSchema = z
   .object({
-    name: z.string().min(2, "نام حداقل ۲ کاراکتر است."),
-    email: z.string().email("لطفا ایمیل معتبر وارد کنید."),
+    username: z.string().min(3, "نام کاربری حداقل ۳ کاراکتر است."),
+    email: z.union([
+      z.literal(""),
+      z.string().email("لطفا ایمیل معتبر وارد کنید."),
+    ]),
     password: z.string().min(6, "رمز حداقل ۶ کاراکتر است."),
     confirmPassword: z.string(),
   })
