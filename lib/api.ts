@@ -26,6 +26,8 @@ type RequestOptions = {
   method?: "GET" | "POST";
   body?: unknown;
   token?: string;
+  // برای صدا زدن مسیرهای خود Next (مثل "/api/auth") به‌جای Django.
+  baseUrl?: string;
 };
 
 type ErrorBody = {
@@ -34,7 +36,8 @@ type ErrorBody = {
   errors?: FieldErrors;
 };
 
-// مسیرها باید اسلش آخر داشته باشند، مثلاً "/spaces/".
+// مسیرهای Django باید اسلش آخر داشته باشند، مثلاً "/spaces/".
+// مسیرهای Next (با baseUrl) اسلش آخر ندارند، مثلاً "/login".
 export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
@@ -45,7 +48,7 @@ export async function apiRequest<T>(
 
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}${path}`, {
+    response = await fetch(`${options.baseUrl ?? BASE_URL}${path}`, {
       method: options.method ?? "GET",
       headers,
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
