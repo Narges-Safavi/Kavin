@@ -56,7 +56,7 @@ export default function ReservationConfirmation({
         ثبت یک رزرو دیگر
       </Button>
       <p className="demo-note">
-        رزرو نمایشی در همین مرورگر ذخیره شده؛ نیازی به پرداخت نیست.
+        رزرو روی سرور ذخیره شد؛ در این نسخه نیازی به پرداخت نیست.
       </p>
     </div>
   );

@@ -1,32 +1,55 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DatePicker from "./ui/DatePicker";
 import TimePicker from "./ui/TimePicker";
 import Icon from "./ui/Icon";
 import Button from "./ui/Button";
-import { useNow } from "@/lib/use-now";
 import ReservationConfirmation from "./ReservationConfirmation";
 import {
   createReservationSchema,
   type ReservationFormData,
 } from "@/lib/schemas";
-import { type Space, type Booking, bookings as fixtures } from "@/lib/data";
-import { createBooking, useBookings } from "@/lib/booking-store";
-import { isSpaceAvailable } from "@/lib/availability";
+import type { Space, Booking } from "@/lib/data";
+import { ApiError } from "@/lib/api";
+import {
+  createBooking,
+  getAvailability,
+  type AvailabilitySlot,
+} from "@/lib/bookings-api";
 import {
   formatNumber,
   formatTime,
   getBookingTotal,
+  isValidDateString,
   TIME_SLOTS,
   timeToMinutes,
 } from "@/lib/date";
+
+// بازه‌های نیم‌ساعته‌ی پشت‌سرهم و رزروشده را یکی می‌کند: «۱۰:۰۰ تا ۱۱:۳۰»
+function bookedRanges(slots: AvailabilitySlot[]): string[] {
+  const ranges: { start: string; end: string }[] = [];
+  for (const slot of slots) {
+    if (slot.status !== "booked") continue;
+    const last = ranges[ranges.length - 1];
+    if (last && last.end === slot.startTime) last.end = slot.endTime;
+    else ranges.push({ start: slot.startTime, end: slot.endTime });
+  }
+  return ranges.map(
+    (range) => `${formatTime(range.start)} تا ${formatTime(range.end)}`,
+  );
+}
+
 export default function ReservationForm({ space }: { space: Space }) {
-  const now = useNow();
+  const router = useRouter();
   const [confirmed, setConfirmed] = useState<Booking | null>(null);
-  const saved = useBookings();
-  const all = [...fixtures, ...saved];
+  const [reloadKey, setReloadKey] = useState(0);
+  const [availability, setAvailability] = useState<{
+    key: string;
+    slots: AvailabilitySlot[] | null;
+  } | null>(null);
   const {
     handleSubmit,
     control,
@@ -45,36 +68,85 @@ export default function ReservationForm({ space }: { space: Space }) {
     guests = 1,
   } = useWatch({ control });
   const total = getBookingTotal(space.price, startTime, endTime);
-  const reserved = all.filter(
-    (booking) =>
-      booking.spaceId === space.id &&
-      booking.date === date &&
-      booking.status === "confirmed",
-  );
-  const disabledStart = TIME_SLOTS.filter(
-    (time, i) =>
-      time === "22:00" ||
-      (date && new Date(`${date}T${time}:00`).getTime() <= now) ||
-      !isSpaceAvailable(space.id, date, time, TIME_SLOTS[i + 1] ?? time, all),
-  );
-  const disabledEnd = TIME_SLOTS.filter(
-    (time) =>
-      time <= startTime ||
-      !startTime ||
-      !isSpaceAvailable(space.id, date, startTime, time, all),
-  );
-  function submit(data: ReservationFormData) {
-    try {
-      setConfirmed(createBooking(space.id, data));
-    } catch (error) {
-      setError("root", {
-        message:
-          error instanceof Error
-            ? error.message
-            : "ثبت رزرو ممکن نشد. دوباره تلاش کنید.",
+
+  // ساعت‌های آزاد را از سرور می‌گیریم. نتیجه با کلید «تاریخ + شماره‌ی تازه‌سازی»
+  // نگه داشته می‌شود تا بدانیم هنوز منتظر جواب این تاریخ هستیم یا نه.
+  const requestKey = isValidDateString(date) ? `${date}:${reloadKey}` : "";
+  useEffect(() => {
+    if (!requestKey) return;
+    let cancelled = false;
+    getAvailability(space.id, date)
+      .then((result) => {
+        if (!cancelled)
+          setAvailability({ key: requestKey, slots: result.slots });
+      })
+      .catch(() => {
+        if (!cancelled) setAvailability({ key: requestKey, slots: null });
       });
+    return () => {
+      cancelled = true;
+    };
+  }, [requestKey, date, space.id]);
+
+  const current = availability?.key === requestKey ? availability : null;
+  const loading = requestKey !== "" && current === null;
+  const failed = current !== null && current.slots === null;
+  const slots = current?.slots ?? [];
+  const statusByStart = new Map(slots.map((slot) => [slot.startTime, slot.status]));
+  const booked = bookedRanges(slots);
+
+  const hasDate = date !== "";
+  const disabledStart = TIME_SLOTS.filter(
+    (time) =>
+      time === "22:00" || (hasDate && statusByStart.get(time) !== "available"),
+  );
+  const startIndex = TIME_SLOTS.indexOf(startTime);
+  const disabledEnd = TIME_SLOTS.filter((time, index) => {
+    if (!startTime || startIndex === -1 || index <= startIndex) return true;
+    if (!hasDate) return false;
+    // همه‌ی بازه‌های بین شروع و پایان باید آزاد باشند.
+    return TIME_SLOTS.slice(startIndex, index).some(
+      (t) => statusByStart.get(t) !== "available",
+    );
+  });
+
+  async function submit(data: ReservationFormData) {
+    try {
+      const booking = await createBooking(space.id, data);
+      setReloadKey((key) => key + 1);
+      setConfirmed(booking);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        setError("root", {
+          message: "ثبت رزرو ممکن نشد. دوباره تلاش کنید.",
+        });
+        return;
+      }
+      if (error.status === 401) {
+        router.push("/login");
+        return;
+      }
+      if (error.code === "slot_taken") {
+        setValue("startTime", "");
+        setValue("endTime", "");
+        setReloadKey((key) => key + 1);
+        setError("root", {
+          message: "این بازه همین الان رزرو شد. ساعت دیگری انتخاب کن.",
+        });
+        return;
+      }
+      let hasFieldError = false;
+      for (const field of ["date", "startTime", "endTime", "guests"] as const) {
+        const message = error.errors[field]?.[0];
+        if (message) {
+          setError(field, { message });
+          hasFieldError = true;
+        }
+      }
+      if (!hasFieldError) setError("root", { message: error.message });
     }
   }
+
   if (confirmed)
     return (
       <ReservationConfirmation
@@ -151,18 +223,27 @@ export default function ReservationForm({ space }: { space: Space }) {
         </div>
         {date && (
           <div className="availability-note">
-            {reserved.length ? (
+            {loading ? (
+              <>
+                <Icon name="clock" size={15} />
+                <span>در حال دریافت ساعت‌های آزاد...</span>
+              </>
+            ) : failed ? (
               <>
                 <Icon name="calendar" size={15} />
-                <span>
-                  بازه‌های رزروشده:{" "}
-                  {reserved
-                    .map(
-                      (item) =>
-                        `${formatTime(item.startTime)} تا ${formatTime(item.endTime)}`,
-                    )
-                    .join("، ")}
-                </span>
+                <span>ساعت‌های آزاد دریافت نشد.</span>
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => setReloadKey((key) => key + 1)}
+                >
+                  تلاش دوباره
+                </button>
+              </>
+            ) : booked.length ? (
+              <>
+                <Icon name="calendar" size={15} />
+                <span>بازه‌های رزروشده: {booked.join("، ")}</span>
               </>
             ) : (
               <>
@@ -280,7 +361,8 @@ export default function ReservationForm({ space }: { space: Space }) {
         </p>
       </form>
       <div className="demo-note">
-        نسخه آموزشی: رزروها فقط در همین مرورگر ذخیره می‌شوند.
+        برای ثبت رزرو باید وارد حساب کاربری‌ات شده باشی. مبلغ نهایی را سرور
+        محاسبه می‌کند.
       </div>
     </div>
   );
