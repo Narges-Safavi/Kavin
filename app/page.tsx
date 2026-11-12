@@ -2,8 +2,19 @@ import Link from "next/link";
 import Image from "next/image";
 import SpaceCard from "@/components/SpaceCard";
 import Icon from "@/components/ui/Icon";
-import { spaces } from "@/lib/data";
-export default function Home() {
+import { getSpaces } from "@/lib/spaces";
+import type { Space } from "@/lib/data";
+
+// فضاها از API می‌آیند، پس صفحه هر بار تازه ساخته می‌شود.
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  let spaces: Space[] = [];
+  try {
+    spaces = await getSpaces();
+  } catch {
+    // اگر سرور در دسترس نبود، صفحه‌ی اصلی بدون کارت فضاها هم باز می‌شود.
+  }
   return (
     <>
       <section className="hero container">
@@ -101,11 +112,15 @@ export default function Home() {
             <Icon name="arrow" size={18} />
           </Link>
         </div>
-        <div className="spaces-grid home-spaces">
-          {spaces.slice(0, 3).map((space) => (
-            <SpaceCard key={space.id} space={space} />
-          ))}
-        </div>
+        {spaces.length ? (
+          <div className="spaces-grid home-spaces">
+            {spaces.slice(0, 3).map((space) => (
+              <SpaceCard key={space.id} space={space} />
+            ))}
+          </div>
+        ) : (
+          <p>فضاها الان در دسترس نیستند. کمی بعد دوباره سر بزن.</p>
+        )}
       </section>
       <section className="container how-section">
         <div className="how-intro">
