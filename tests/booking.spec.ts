@@ -1,3 +1,4 @@
+﻿import { mockBookings } from "./mock-bookings";
 import { test, expect, type Page } from "@playwright/test";
 import { createReservationSchema } from "../lib/schemas";
 import { isSpaceAvailable } from "../lib/availability";
@@ -27,7 +28,8 @@ async function reserve(page: Page) {
     page.getByRole("heading", { name: "رزروت ثبت شد!" }),
   ).toBeVisible();
 }
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, context }) => {
+  await mockBookings(context);
   await page.clock.install({ time: new Date("2027-05-09T06:00:00Z") });
 });
 test("list, search, capacity and type filters", async ({ page }) => {
@@ -145,22 +147,24 @@ test("past time disabled and end before start disabled", async ({ page }) => {
       .getByRole("button", { name: "۱۰:۳۰", exact: true }),
   ).toBeEnabled();
 });
-test("storage failure shows error instead of success", async ({ page }) => {
-  await page.addInitScript(() => {
-    const original = Storage.prototype.setItem;
-    Storage.prototype.setItem = function (key, value) {
-      if (key === "kavin.bookings.v1")
-        throw new DOMException("quota", "QuotaExceededError");
-      return original.call(this, key, value);
-    };
-  });
+test("failed booking API shows an error instead of success", async ({
+  page,
+}) => {
+  await page.route("**/api/kavin/bookings", (route) =>
+    route.fulfill({
+      status: 503,
+      json: { detail: "ثبت رزرو موقتاً در دسترس نیست" },
+    }),
+  );
   await page.goto("/spaces/1");
   await chooseDate(page);
   await chooseTime(page, "از ساعت", "۱۰:۰۰");
   await chooseTime(page, "تا ساعت", "۱۱:۳۰");
   await page.getByRole("button", { name: "تأیید و ثبت رزرو" }).click();
   await expect(
-    page.getByRole("alert").filter({ hasText: "ذخیره رزرو ممکن نشد" }),
+    page
+      .getByRole("alert")
+      .filter({ hasText: "ثبت رزرو موقتاً در دسترس نیست" }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "رزروت ثبت شد!" }),

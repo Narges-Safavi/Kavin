@@ -1,15 +1,17 @@
+﻿import { mockBookings } from "./mock-bookings";
 import { test, expect } from "@playwright/test";
 
-test("booking availability updates in another tab", async ({
+test("booking availability updates when another tab fetches it again", async ({
   page,
   context,
 }) => {
+  await mockBookings(context);
   await page.clock.install({ time: new Date("2027-05-09T06:00:00Z") });
   await page.goto("/spaces/1");
   const second = await context.newPage();
   await second.clock.install({ time: new Date("2027-05-09T06:00:00Z") });
   await second.goto("/spaces/1");
-  for (const tab of [page, second]) {
+  for (const tab of [page]) {
     await tab.getByRole("button", { name: /تاریخ حضورت/ }).click();
     await tab
       .getByRole("button", { name: "انتخاب امروز", exact: true })
@@ -29,6 +31,11 @@ test("booking availability updates in another tab", async ({
   await expect(
     page.getByRole("heading", { name: "رزروت ثبت شد!" }),
   ).toBeVisible();
+  await second.reload();
+  await second.getByRole("button", { name: /تاریخ حضورت/ }).click();
+  await second
+    .getByRole("button", { name: "انتخاب امروز", exact: true })
+    .click();
   await second.getByRole("button", { name: "از ساعت", exact: true }).click();
   await expect(
     second
@@ -37,8 +44,12 @@ test("booking availability updates in another tab", async ({
   ).toBeDisabled();
 });
 
-test("complete mobile booking with themed pickers", async ({ page }) => {
+test("complete mobile booking with themed pickers", async ({
+  page,
+  context,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await mockBookings(context);
   await page.clock.install({ time: new Date("2027-05-09T06:00:00Z") });
   await page.goto("/spaces/3");
   await page.getByRole("button", { name: /تاریخ حضورت/ }).click();
