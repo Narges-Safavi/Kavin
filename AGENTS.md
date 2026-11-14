@@ -24,12 +24,11 @@ The owner is a junior front-end developer who is still learning. Always reply in
 
 ## Status
 Done: shared API client, login/signup against Django, session cookie, navbar login state, spaces list/detail from API, availability + booking + my-bookings from API, home page from API.
-Possibly done, verify with git: removing the old localStorage store (`lib/booking-store.ts`, `lib/availability.ts`, `lib/use-now.ts`) and unused fixtures from `lib/data.ts`.
+Done: Playwright tests use mocked API responses; booking flows are in tests/bookings-flow.spec.ts. Removed the obsolete localStorage store, availability helper, clock hook, and their dedicated test. Removed unused bookings and fetchSpaces exports from lib/data.ts; shared types and the spaces catalog remain.
 Remaining:
-- Rewrite the Playwright tests (`tests/booking.spec.ts`, `tests/storage.spec.ts`); they still assume the old localStorage version.
-- `app/design-system/page.tsx` still imports `spaces` from `lib/data.ts`.
-- Filters on `/spaces` still run in the browser; the API supports `type`, `minCapacity`, `maxPrice`, `search`, `ordering`.
-- `/spaces/{id}/quote/` is unused; the price preview is computed on the frontend.
+- app/design-system/page.tsx still imports spaces from lib/data.ts.
+- Filters on /spaces still run in the browser; the API supports type, minCapacity, maxPrice, search, ordering.
+- /spaces/{id}/quote/ is unused; the price preview is computed on the frontend.
 - Forgot-password has no backend endpoint.
 
 ## Rules

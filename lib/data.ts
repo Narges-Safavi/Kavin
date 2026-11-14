@@ -98,7 +98,3 @@ export type Booking = {
   total: number;
   createdAt: string;
 };
-export const bookings: Booking[] = [];
-export async function fetchSpaces(): Promise<Space[]> {
-  return spaces;
-}

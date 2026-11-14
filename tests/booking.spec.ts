@@ -1,9 +1,7 @@
 ﻿import { mockBookings } from "./mock-bookings";
 import { test, expect, type Page } from "@playwright/test";
 import { createReservationSchema } from "../lib/schemas";
-import { isSpaceAvailable } from "../lib/availability";
 import { isValidDateString, getBookingTotal } from "../lib/date";
-import type { Booking } from "../lib/data";
 
 async function chooseDate(page: Page) {
   await page.getByRole("button", { name: /تاریخ حضورت/ }).click();
@@ -260,35 +258,4 @@ test("schema rejects malformed dates, invalid times and overcapacity", () => {
   expect(isValidDateString("2028-02-29")).toBe(true);
   expect(isValidDateString("2027-02-29")).toBe(false);
   expect(getBookingTotal(350000, "10:00", "11:30")).toBe(525000);
-});
-test("availability handles contained, adjacent and cancelled bookings", () => {
-  const fixture: Booking = {
-    id: "test",
-    userId: "local-guest",
-    spaceId: "1",
-    date: "2099-10-26",
-    startTime: "10:00",
-    endTime: "12:00",
-    guests: 2,
-    status: "confirmed",
-    total: 700000,
-    createdAt: "2099-10-25",
-  };
-  expect(isSpaceAvailable("1", fixture.date, "11:00", "13:00", [fixture])).toBe(
-    false,
-  );
-  expect(isSpaceAvailable("1", fixture.date, "09:00", "13:00", [fixture])).toBe(
-    false,
-  );
-  expect(isSpaceAvailable("1", fixture.date, "12:00", "13:00", [fixture])).toBe(
-    true,
-  );
-  expect(isSpaceAvailable("2", fixture.date, "11:00", "13:00", [fixture])).toBe(
-    true,
-  );
-  expect(
-    isSpaceAvailable("1", fixture.date, "11:00", "13:00", [
-      { ...fixture, status: "cancelled" },
-    ]),
-  ).toBe(true);
 });
