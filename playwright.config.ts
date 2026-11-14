@@ -1,4 +1,4 @@
-import { defineConfig, devices } from "@playwright/test";
+﻿import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests",
@@ -20,10 +20,16 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], channel: "chrome" },
     },
   ],
-  webServer: {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3001",
-    url: "http://127.0.0.1:3001",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  webServer: [
+    {
+      command: "node --experimental-strip-types tests/catalog-server.mjs",
+      port: 3011,
+    },
+    {
+      command: "npm run dev -- --hostname 127.0.0.1 --port 3001",
+      url: "http://127.0.0.1:3001",
+      env: { NEXT_PUBLIC_KAVIN_API_URL: "http://127.0.0.1:3011/api/v1" },
+      timeout: 120000,
+    },
+  ],
 });
