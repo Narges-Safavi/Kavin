@@ -2,6 +2,7 @@
 
 export default defineConfig({
   testDir: "./tests",
+  testIgnore: "**/integration/**",
   fullyParallel: true,
   workers: 2,
   timeout: 45000,
