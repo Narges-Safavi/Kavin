@@ -259,3 +259,146 @@ test("schema rejects malformed dates, invalid times and overcapacity", () => {
   expect(isValidDateString("2027-02-29")).toBe(false);
   expect(getBookingTotal(350000, "10:00", "11:30")).toBe(525000);
 });
+
+test("expired session redirects booking submission to login", async ({
+  page,
+}) => {
+  await page.route("**/api/kavin/bookings", (route) =>
+    route.fulfill({ status: 401, json: { code: "not_authenticated" } }),
+  );
+  await page.goto("/spaces/1");
+  await chooseDate(page);
+  await chooseTime(page, "از ساعت", "۱۰:۰۰");
+  await chooseTime(page, "تا ساعت", "۱۱:۳۰");
+  await page.getByRole("button", { name: "تأیید و ثبت رزرو" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test("unauthorized bookings list redirects to login", async ({ page }) => {
+  await page.route("**/api/kavin/bookings?*", (route) =>
+    route.fulfill({ status: 401, json: { code: "not_authenticated" } }),
+  );
+  await page.goto("/bookings");
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test("slot conflict refreshes availability and clears selected times", async ({
+  page,
+}) => {
+  await page.goto("/spaces/1");
+  await chooseDate(page);
+  await chooseTime(page, "از ساعت", "۱۰:۰۰");
+  await chooseTime(page, "تا ساعت", "۱۱:۳۰");
+  await page.route("**/api/kavin/bookings", async (route) => {
+    // Another user claims this interval after the initial availability response.
+    await page.route("**/api/kavin/spaces/1/availability?*", (availability) =>
+      availability.fulfill({
+        json: {
+          spaceId: "1",
+          date: "2027-05-09",
+          slots: [
+            { startTime: "10:00", endTime: "10:30", status: "booked" },
+            { startTime: "12:00", endTime: "12:30", status: "available" },
+          ],
+        },
+      }),
+    );
+    await route.fulfill({ status: 409, json: { code: "slot_taken" } });
+  });
+  const refreshed = page.waitForResponse((response) =>
+    response.url().includes("/availability?"),
+  );
+  await page.getByRole("button", { name: "تأیید و ثبت رزرو" }).click();
+  await refreshed;
+  await expect(
+    page.getByRole("alert").filter({
+      hasText:
+        /نام کاربری یا رمز عبور اشتباه است|این بازه همین الان رزرو شد|لغو رزرو موقتاً ممکن نیست/,
+    }),
+  ).toContainText("این بازه همین الان رزرو شد");
+  await expect(page.locator(".total-row")).toContainText("—");
+  await page.getByRole("button", { name: "از ساعت", exact: true }).click();
+  await expect(
+    page
+      .getByRole("dialog")
+      .getByRole("button", { name: "۱۰:۰۰", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page
+      .getByRole("dialog")
+      .getByRole("button", { name: "۱۲:۰۰", exact: true }),
+  ).toBeEnabled();
+});
+
+test("failed cancellation keeps the booking and allows retry", async ({
+  page,
+}) => {
+  await reserve(page);
+  await page.goto("/bookings");
+  await page.route("**/api/kavin/bookings/*/cancel", (route) =>
+    route.fulfill({
+      status: 503,
+      json: { detail: "لغو رزرو موقتاً ممکن نیست" },
+    }),
+  );
+  await page.getByRole("button", { name: "لغو رزرو", exact: true }).click();
+  await page.getByRole("button", { name: "بله، لغو کن" }).click();
+  await expect(
+    page.getByRole("alert").filter({
+      hasText:
+        /نام کاربری یا رمز عبور اشتباه است|این بازه همین الان رزرو شد|لغو رزرو موقتاً ممکن نیست/,
+    }),
+  ).toContainText("لغو رزرو موقتاً ممکن نیست");
+  await expect(page.locator(".reservation-row")).toHaveCount(1);
+  await page.unroute("**/api/kavin/bookings/*/cancel");
+  await page.getByRole("button", { name: "لغو رزرو", exact: true }).click();
+  await page.getByRole("button", { name: "بله، لغو کن" }).click();
+  await expect(page.locator(".reservation-row")).toHaveCount(0);
+});
+
+test("booking_started refreshes the list and removes cancellation", async ({
+  page,
+}) => {
+  await reserve(page);
+  await page.goto("/bookings");
+  await expect(page.locator(".reservation-row")).toHaveCount(1);
+  await page.route("**/api/kavin/bookings/*/cancel", async (route) => {
+    await page.route("**/api/kavin/bookings?*", async (list) => {
+      await list.fulfill({
+        json: {
+          count: 1,
+          next: null,
+          previous: null,
+          results: [
+            {
+              id: "1",
+              userId: "test-user",
+              spaceId: "1",
+              spaceName: "اتاق جلسه آفتاب",
+              date: "2027-05-09",
+              startTime: "10:00",
+              endTime: "11:30",
+              guests: 2,
+              status: "confirmed",
+              state: "in_progress",
+              canCancel: false,
+              total: 525000,
+              createdAt: "2027-05-09T06:00:00Z",
+              cancelledAt: null,
+            },
+          ],
+        },
+      });
+    });
+    await route.fulfill({
+      status: 409,
+      json: { code: "booking_started", detail: "رزرو شروع شده است" },
+    });
+  });
+  await page.getByRole("button", { name: "لغو رزرو", exact: true }).click();
+  await page.getByRole("button", { name: "بله، لغو کن" }).click();
+  await expect(page.locator(".reservation-row")).toContainText("در حال انجام");
+  await expect(
+    page.getByRole("button", { name: "لغو رزرو", exact: true }),
+  ).toHaveCount(0);
+});
