@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 
 test("real Django login, HttpOnly session, booking, cancellation and logout", async ({
   page,
   context,
 }) => {
   const username = `e2e-${randomUUID()}`;
-  const password = randomUUID();
+  const password = randomBytes(32).toString("base64");
   const registration = await context.request.post("/api/auth/register", {
     data: { username, password },
   });
