@@ -11,9 +11,9 @@ import { ApiError } from "@/lib/api";
 import {
   cancelBooking,
   getMyBookings,
+  getBookingSpaces,
   type ApiBooking,
 } from "@/lib/bookings-api";
-import { spaces } from "@/lib/data";
 import { formatNumber, formatPersianDate, formatTime } from "@/lib/date";
 
 type Filter = "upcoming" | "past" | "cancelled";
@@ -32,12 +32,13 @@ const statusLabels = {
 function ReservationRow({
   booking,
   onChanged,
+  image,
 }: {
   booking: ApiBooking;
   onChanged: () => void;
+  image?: string;
 }) {
-  // فقط برای عکس؛ نام فضا از خود رزرو می‌آید.
-  const space = spaces.find((item) => item.id === booking.spaceId);
+  const [failedImage, setFailedImage] = useState<string>();
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -61,11 +62,21 @@ function ReservationRow({
     <article className="reservation-row">
       <Link
         href={`/spaces/${booking.spaceId}`}
-        className="reservation-photo"
+        className="reservation-photo flex items-center justify-center"
         tabIndex={-1}
         aria-hidden="true"
       >
-        {space && <Image src={space.image} alt="" fill sizes="150px" />}
+        {image && failedImage !== image ? (
+          <Image
+            src={image}
+            alt=""
+            fill
+            sizes="150px"
+            onError={() => setFailedImage(image)}
+          />
+        ) : (
+          <Icon name="calendar" size={32} />
+        )}
       </Link>
       <div>
         <h2>
@@ -129,6 +140,24 @@ export default function BookingsPage() {
   const [result, setResult] = useState<Result>({ status: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
   const [filter, setFilter] = useState<Filter>("upcoming");
+  const [images, setImages] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    getBookingSpaces()
+      .then((spaces) => {
+        if (!cancelled)
+          setImages(
+            Object.fromEntries(spaces.map((space) => [space.id, space.image])),
+          );
+      })
+      .catch(() => {
+        // Images are optional; booking actions remain available if the catalog fails.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -215,6 +244,7 @@ export default function BookingsPage() {
             <ReservationRow
               key={booking.id}
               booking={booking}
+              image={images[booking.spaceId]}
               onChanged={reload}
             />
           ))}

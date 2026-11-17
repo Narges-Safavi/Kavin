@@ -1,8 +1,12 @@
 import { apiRequest } from "@/lib/api";
-import type { Booking } from "@/lib/data";
+import type { Booking, Space } from "@/lib/data";
 import type { ReservationFormData } from "@/lib/schemas";
 
 const PROXY = "/api/kavin";
+
+export function getBookingSpaces() {
+  return apiRequest<Space[]>("/spaces", { baseUrl: PROXY });
+}
 
 export type BookingQuote = {
   available: boolean;
