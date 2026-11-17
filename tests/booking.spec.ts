@@ -260,6 +260,105 @@ test("schema rejects malformed dates, invalid times and overcapacity", () => {
   expect(getBookingTotal(350000, "10:00", "11:30")).toBe(525000);
 });
 
+test("quote uses the server total and ignores a late response", async ({
+  page,
+}) => {
+  let releaseFirst!: () => void;
+  const firstHeld = new Promise<void>((resolve) => {
+    releaseFirst = resolve;
+  });
+  let firstFinished!: () => void;
+  const finished = new Promise<void>((resolve) => {
+    firstFinished = resolve;
+  });
+  const inputs: unknown[] = [];
+  await page.route("**/api/kavin/spaces/1/quote", async (route) => {
+    const input = route.request().postDataJSON();
+    inputs.push(input);
+    if (input.guests === 1) await firstHeld;
+    await route.fulfill({
+      json: {
+        available: true,
+        price: 350000,
+        total: input.guests === 1 ? 111000 : 777000,
+        currency: "toman",
+      },
+    });
+    if (input.guests === 1) firstFinished();
+  });
+  await page.goto("/spaces/1");
+  await chooseDate(page);
+  await chooseTime(page, "از ساعت", "۱۰:۰۰");
+  await chooseTime(page, "تا ساعت", "۱۱:۳۰");
+  await expect(
+    page.getByRole("status").filter({ hasText: "در حال دریافت قیمت" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "تأیید و ثبت رزرو" }),
+  ).toBeDisabled();
+  await expect.poll(() => inputs.length).toBe(1);
+  await page.getByRole("button", { name: "افزایش تعداد نفرات" }).click();
+  await expect(page.locator(".total-row")).toContainText("۷۷۷٬۰۰۰");
+  releaseFirst();
+  await finished;
+  await expect(page.locator(".total-row")).toContainText("۷۷۷٬۰۰۰");
+  expect(inputs).toEqual([
+    { date: "2027-05-09", startTime: "10:00", endTime: "11:30", guests: 1 },
+    { date: "2027-05-09", startTime: "10:00", endTime: "11:30", guests: 2 },
+  ]);
+});
+
+test("quote failure can be retried and an unavailable interval cannot be submitted", async ({
+  page,
+}) => {
+  let attempts = 0;
+  await page.route("**/api/kavin/spaces/1/quote", async (route) => {
+    attempts += 1;
+    if (attempts === 1) {
+      await route.fulfill({
+        status: 503,
+        json: { detail: "دریافت قیمت ممکن نشد" },
+      });
+      return;
+    }
+    await route.fulfill({
+      json: {
+        available: attempts > 2,
+        price: 350000,
+        total: 0,
+        currency: "toman",
+      },
+    });
+  });
+  await page.goto("/spaces/1");
+  await chooseDate(page);
+  await chooseTime(page, "از ساعت", "۱۰:۰۰");
+  await chooseTime(page, "تا ساعت", "۱۱:۳۰");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "دریافت قیمت ممکن نشد" }),
+  ).toBeVisible();
+  await expect(page.locator(".total-row")).toContainText("—");
+  await expect(
+    page.getByRole("button", { name: "تأیید و ثبت رزرو" }),
+  ).toBeDisabled();
+  await page
+    .getByRole("button", { name: "تلاش دوباره برای دریافت قیمت" })
+    .click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "این بازه آزاد نیست" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "تأیید و ثبت رزرو" }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "افزایش تعداد نفرات" }).click();
+  await expect(
+    page.getByRole("button", { name: "تأیید و ثبت رزرو" }),
+  ).toBeEnabled();
+  await expect(page.locator(".total-row strong")).toContainText("۰");
+  await page.getByLabel("چند نفر هستید؟").fill("1.5");
+  await expect(page.locator(".total-row")).toContainText("—");
+});
+
 test("expired session redirects booking submission to login", async ({
   page,
 }) => {

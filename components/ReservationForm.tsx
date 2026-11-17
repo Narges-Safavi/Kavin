@@ -17,12 +17,13 @@ import { ApiError } from "@/lib/api";
 import {
   createBooking,
   getAvailability,
+  getBookingQuote,
+  type BookingQuote,
   type AvailabilitySlot,
 } from "@/lib/bookings-api";
 import {
   formatNumber,
   formatTime,
-  getBookingTotal,
   isValidDateString,
   TIME_SLOTS,
   timeToMinutes,
@@ -46,6 +47,13 @@ export default function ReservationForm({ space }: { space: Space }) {
   const router = useRouter();
   const [confirmed, setConfirmed] = useState<Booking | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [quoteRetry, setQuoteRetry] = useState(0);
+  const [quoteResult, setQuoteResult] = useState<
+    { key: string } & (
+      | { status: "ready"; quote: BookingQuote }
+      | { status: "error"; message: string }
+    )
+  >();
   const [availability, setAvailability] = useState<{
     key: string;
     slots: AvailabilitySlot[] | null;
@@ -67,7 +75,52 @@ export default function ReservationForm({ space }: { space: Space }) {
     endTime = "",
     guests = 1,
   } = useWatch({ control });
-  const total = getBookingTotal(space.price, startTime, endTime);
+  const validQuoteInput = createReservationSchema(space.capacity).safeParse({
+    date,
+    startTime,
+    endTime,
+    guests,
+  }).success;
+  const quoteKey = validQuoteInput
+    ? JSON.stringify([
+        space.id,
+        date,
+        startTime,
+        endTime,
+        guests,
+        quoteRetry,
+        reloadKey,
+      ])
+    : "";
+  const currentQuote = quoteResult?.key === quoteKey ? quoteResult : undefined;
+  const quoteLoading = quoteKey !== "" && !currentQuote;
+  const quote =
+    currentQuote?.status === "ready" ? currentQuote.quote : undefined;
+  const total = quote?.total;
+
+  useEffect(() => {
+    if (!quoteKey) return;
+    let cancelled = false;
+    getBookingQuote(space.id, { date, startTime, endTime, guests })
+      .then((result) => {
+        if (!cancelled)
+          setQuoteResult({ key: quoteKey, status: "ready", quote: result });
+      })
+      .catch((error: unknown) => {
+        if (!cancelled)
+          setQuoteResult({
+            key: quoteKey,
+            status: "error",
+            message:
+              error instanceof ApiError
+                ? error.message
+                : "دریافت قیمت ممکن نشد. دوباره تلاش کنید.",
+          });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [quoteKey, space.id, date, startTime, endTime, guests]);
 
   // ساعت‌های آزاد را از سرور می‌گیریم. نتیجه با کلید «تاریخ + شماره‌ی تازه‌سازی»
   // نگه داشته می‌شود تا بدانیم هنوز منتظر جواب این تاریخ هستیم یا نه.
@@ -92,7 +145,9 @@ export default function ReservationForm({ space }: { space: Space }) {
   const loading = requestKey !== "" && current === null;
   const failed = current !== null && current.slots === null;
   const slots = current?.slots ?? [];
-  const statusByStart = new Map(slots.map((slot) => [slot.startTime, slot.status]));
+  const statusByStart = new Map(
+    slots.map((slot) => [slot.startTime, slot.status]),
+  );
   const booked = bookedRanges(slots);
 
   const hasDate = date !== "";
@@ -111,6 +166,7 @@ export default function ReservationForm({ space }: { space: Space }) {
   });
 
   async function submit(data: ReservationFormData) {
+    if (!quote?.available) return;
     try {
       const booking = await createBooking(space.id, data);
       setReloadKey((key) => key + 1);
@@ -328,7 +384,7 @@ export default function ReservationForm({ space }: { space: Space }) {
           <div>
             <span>مدت حضور</span>
             <strong>
-              {total
+              {startTime && endTime && endTime > startTime
                 ? `${formatNumber((timeToMinutes(endTime) - timeToMinutes(startTime)) / 60)} ساعت`
                 : "پس از انتخاب ساعت"}
             </strong>
@@ -342,16 +398,39 @@ export default function ReservationForm({ space }: { space: Space }) {
           <div className="total-row">
             <span>مبلغ کل</span>
             <strong>
-              {total ? formatNumber(total) : "—"} <small>تومان</small>
+              {total !== undefined ? formatNumber(total) : "—"}{" "}
+              <small>تومان</small>
             </strong>
           </div>
         </div>
+        {quoteLoading && <p role="status">در حال دریافت قیمت...</p>}
+        {currentQuote?.status === "error" && (
+          <div role="alert" className="error-notice">
+            {currentQuote.message}
+            <button
+              type="button"
+              className="link-button"
+              onClick={() => setQuoteRetry((key) => key + 1)}
+            >
+              تلاش دوباره برای دریافت قیمت
+            </button>
+          </div>
+        )}
+        {quote && !quote.available && (
+          <p role="alert" className="error-notice">
+            این بازه آزاد نیست. ساعت دیگری انتخاب کن.
+          </p>
+        )}
         {errors.root?.message && (
           <div role="alert" className="error-notice">
             {errors.root.message}
           </div>
         )}
-        <Button type="submit" disabled={isSubmitting} className="full-width">
+        <Button
+          type="submit"
+          disabled={isSubmitting || (validQuoteInput && !quote?.available)}
+          className="full-width"
+        >
           {isSubmitting ? "در حال ثبت..." : "تأیید و ثبت رزرو"}
           <Icon name="arrow" size={18} />
         </Button>

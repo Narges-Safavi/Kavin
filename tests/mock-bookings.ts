@@ -1,7 +1,7 @@
 ﻿import type { BrowserContext } from "@playwright/test";
 import type { ApiBooking } from "../lib/bookings-api";
 import { spaces } from "../lib/data";
-import { TIME_SLOTS } from "../lib/date";
+import { TIME_SLOTS, getBookingTotal } from "../lib/date";
 
 export async function mockBookings(context: BrowserContext) {
   const bookings: ApiBooking[] = [];
@@ -9,6 +9,32 @@ export async function mockBookings(context: BrowserContext) {
   await context.route("**/api/kavin/**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname.replace("/api/kavin", "");
+    const quotePath = path.match(/^\/spaces\/([^/]+)\/quote$/);
+    if (quotePath && route.request().method() === "POST") {
+      const space = spaces.find(({ id }) => id === quotePath[1]);
+      if (space) {
+        const input = route.request().postDataJSON() as Pick<
+          ApiBooking,
+          "date" | "startTime" | "endTime" | "guests"
+        >;
+        await route.fulfill({
+          json: {
+            available: !bookings.some(
+              (booking) =>
+                booking.spaceId === space.id &&
+                booking.date === input.date &&
+                booking.status === "confirmed" &&
+                booking.startTime < input.endTime &&
+                input.startTime < booking.endTime,
+            ),
+            price: space.price,
+            total: getBookingTotal(space.price, input.startTime, input.endTime),
+            currency: "toman",
+          },
+        });
+        return;
+      }
+    }
     const availability = path.match(/^\/spaces\/([^/]+)\/availability$/);
     if (availability) {
       const spaceId = availability[1];
