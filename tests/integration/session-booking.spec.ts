@@ -32,6 +32,7 @@ test("real Django login, HttpOnly session, booking, cancellation and logout", as
   await page.goto("/spaces/1");
   await page.getByRole("button", { name: /تاریخ حضورت/ }).click();
   await page.getByRole("button", { name: "انتخاب امروز", exact: true }).click();
+  const quoteResponse = page.waitForResponse("**/api/kavin/spaces/1/quote");
   for (const [label, time] of [
     ["از ساعت", "۱۰:۰۰"],
     ["تا ساعت", "۱۱:۳۰"],
@@ -42,6 +43,12 @@ test("real Django login, HttpOnly session, booking, cancellation and logout", as
       .getByRole("button", { name: time, exact: true })
       .click();
   }
+  const priced = await quoteResponse;
+  expect(priced.status()).toBe(200);
+  const quote = await priced.json();
+  expect(quote.available).toBe(true);
+  expect(quote.total).toBe(525000);
+  await expect(page.locator(".total-row")).toContainText("۵۲۵٬۰۰۰");
   await page.getByRole("button", { name: "تأیید و ثبت رزرو" }).click();
   await expect(
     page.getByRole("heading", { name: "رزروت ثبت شد!" }),

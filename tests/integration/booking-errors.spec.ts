@@ -18,6 +18,9 @@ async function prepareBooking(page: Page) {
       .getByRole("button", { name: time, exact: true })
       .click();
   }
+  await expect(
+    page.getByRole("button", { name: "تأیید و ثبت رزرو" }),
+  ).toBeEnabled();
   // At 00:00 UTC the Tehran calendar is on the same Gregorian date.
   return future.toISOString().slice(0, 10);
 }

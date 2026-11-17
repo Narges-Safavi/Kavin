@@ -4,6 +4,24 @@ import type { ReservationFormData } from "@/lib/schemas";
 
 const PROXY = "/api/kavin";
 
+export type BookingQuote = {
+  available: boolean;
+  price: number;
+  total: number;
+  currency: "toman";
+};
+
+export function getBookingQuote(spaceId: string, data: ReservationFormData) {
+  return apiRequest<BookingQuote>(
+    `/spaces/${encodeURIComponent(spaceId)}/quote`,
+    {
+      method: "POST",
+      baseUrl: PROXY,
+      body: data,
+    },
+  );
+}
+
 export type AvailabilitySlot = {
   startTime: string;
   endTime: string;
