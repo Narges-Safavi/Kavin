@@ -1,41 +1,61 @@
 "use client";
-import { useState } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useTransition,
+  useOptimistic,
+} from "react";
+import { useRouter } from "next/navigation";
+import {
+  readSpaceFilters,
+  spaceFilterQuery,
+  type SpaceFilters,
+} from "@/lib/space-filters";
 import { spaceTypeLabels, type Space, type SpaceType } from "@/lib/data";
 import SpaceCard from "./SpaceCard";
 import Icon from "./ui/Icon";
 import Button from "./ui/Button";
 import { formatNumber } from "@/lib/date";
-export default function SpacesExplorer({ spaces }: { spaces: Space[] }) {
-  const [search, setSearch] = useState("");
-  const [type, setType] = useState<SpaceType | "all">("all");
-  const [capacity, setCapacity] = useState(0);
-  const [sort, setSort] = useState("recommended");
+export default function SpacesExplorer({
+  spaces,
+  filters,
+}: {
+  spaces: Space[];
+  filters: SpaceFilters;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [activeFilters, setActiveFilters] = useOptimistic(filters);
+  const [search, setSearch] = useState(filters.search);
+  const [previousSearch, setPreviousSearch] = useState(filters.search);
+  if (previousSearch !== filters.search) {
+    setPreviousSearch(filters.search);
+    setSearch(filters.search);
+  }
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), [filters]);
+  const { type, capacity, sort } = activeFilters;
+  function navigate(change: Partial<SpaceFilters>) {
+    clearTimeout(timer.current);
+    const nextFilters = readSpaceFilters(
+      new URLSearchParams(spaceFilterQuery({ ...filters, search, ...change })),
+    );
+    const query = spaceFilterQuery(nextFilters);
+    startTransition(() => {
+      setActiveFilters(nextFilters);
+      router.push(query ? `/spaces?${query}` : "/spaces", { scroll: false });
+    });
+  }
+  function updateSearch(value: string) {
+    setSearch(value);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => navigate({ search: value }), 350);
+  }
   const reset = () => {
     setSearch("");
-    setType("all");
-    setCapacity(0);
-    setSort("recommended");
+    navigate({ search: "", type: "all", capacity: 0, sort: "recommended" });
   };
-  const normalized = (value: string) =>
-    value
-      .trim()
-      .replace(/ي/g, "ی")
-      .replace(/ك/g, "ک")
-      .replace(/\u200c/g, " ");
-  const filtered = spaces
-    .filter(
-      (space) =>
-        normalized(space.name).includes(normalized(search)) &&
-        (type === "all" || space.type === type) &&
-        space.capacity >= capacity,
-    )
-    .sort((a, b) =>
-      sort === "low"
-        ? a.price - b.price
-        : sort === "high"
-          ? b.price - a.price
-          : 0,
-    );
   return (
     <div className="explorer-layout">
       <aside className="filters-card">
@@ -56,7 +76,9 @@ export default function SpacesExplorer({ spaces }: { spaces: Space[] }) {
               id="search"
               placeholder="نام فضا را جستجو کن..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              disabled={pending}
+              maxLength={150}
+              onChange={(e) => updateSearch(e.target.value)}
             />
           </div>
         </div>
@@ -75,17 +97,12 @@ export default function SpacesExplorer({ spaces }: { spaces: Space[] }) {
                 name="spaceType"
                 value={option.value}
                 checked={type === option.value}
-                onChange={() => setType(option.value as SpaceType | "all")}
+                disabled={pending}
+                onChange={() =>
+                  navigate({ type: option.value as SpaceType | "all" })
+                }
               />
               <span>{option.label}</span>
-              <small>
-                {formatNumber(
-                  spaces.filter(
-                    (space) =>
-                      option.value === "all" || space.type === option.value,
-                  ).length,
-                )}
-              </small>
             </label>
           ))}
         </fieldset>
@@ -95,8 +112,14 @@ export default function SpacesExplorer({ spaces }: { spaces: Space[] }) {
             className="input"
             id="capacity"
             value={capacity}
-            onChange={(e) => setCapacity(Number(e.target.value))}
+            disabled={pending}
+            onChange={(e) => navigate({ capacity: Number(e.target.value) })}
           >
+            {capacity > 0 && ![2, 4, 10].includes(capacity) && (
+              <option value={capacity}>
+                {formatNumber(capacity)} نفر و بیشتر
+              </option>
+            )}
             <option value={0}>مهم نیست</option>
             <option value={2}>۲ نفر و بیشتر</option>
             <option value={4}>۴ نفر و بیشتر</option>
@@ -109,18 +132,22 @@ export default function SpacesExplorer({ spaces }: { spaces: Space[] }) {
           <p>اینترنت، چای و قهوه در تمام فضاها همراه شماست.</p>
         </div>
       </aside>
-      <div className="explorer-results">
+      <div className="explorer-results" aria-busy={pending}>
+        {pending && <p role="status">در حال دریافت فضاها...</p>}
         <div className="results-toolbar">
           <span>
-            <strong>{formatNumber(filtered.length)} فضا</strong> برای یک روز
-            کاری خوب
+            <strong>{formatNumber(spaces.length)} فضا</strong> برای یک روز کاری
+            خوب
           </span>
           <label className="sort-label">
             مرتب‌سازی
             <select
               aria-label="مرتب‌سازی"
               value={sort}
-              onChange={(e) => setSort(e.target.value)}
+              disabled={pending}
+              onChange={(e) =>
+                navigate({ sort: e.target.value as SpaceFilters["sort"] })
+              }
             >
               <option value="recommended">پیشنهاد کاوین</option>
               <option value="low">کمترین قیمت</option>
@@ -128,9 +155,9 @@ export default function SpacesExplorer({ spaces }: { spaces: Space[] }) {
             </select>
           </label>
         </div>
-        {filtered.length ? (
+        {spaces.length ? (
           <div className="spaces-grid explorer-grid">
-            {filtered.map((space) => (
+            {spaces.map((space) => (
               <SpaceCard key={space.id} space={space} />
             ))}
           </div>

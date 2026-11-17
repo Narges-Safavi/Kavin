@@ -1,8 +1,10 @@
 import { ApiError, apiRequest } from "@/lib/api";
 import type { Space } from "@/lib/data";
+import { spaceFilterQuery, type SpaceFilters } from "./space-filters";
 
-export async function getSpaces(): Promise<Space[]> {
-  return apiRequest<Space[]>("/spaces/");
+export async function getSpaces(filters?: SpaceFilters): Promise<Space[]> {
+  const query = filters ? spaceFilterQuery(filters) : "";
+  return apiRequest<Space[]>(`/spaces/${query ? `?${query}` : ""}`);
 }
 
 // اگر فضا وجود نداشته باشد یا غیرفعال باشد null برمی‌گرداند.
