@@ -56,6 +56,13 @@ test("real Django login, HttpOnly session, booking, cancellation and logout", as
   await page.goto("/bookings");
   await page.reload();
   await expect(page.locator(".reservation-row")).toHaveCount(1);
+  await expect
+    .poll(() =>
+      page
+        .locator(".reservation-photo img")
+        .evaluate((image) => (image as HTMLImageElement).naturalWidth),
+    )
+    .toBeGreaterThan(0);
   await page.getByRole("button", { name: "لغو رزرو", exact: true }).click();
   await page.getByRole("button", { name: "بله، لغو کن" }).click();
   await expect(page.locator(".reservation-row")).toHaveCount(0);

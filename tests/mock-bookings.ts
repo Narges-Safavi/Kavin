@@ -9,6 +9,10 @@ export async function mockBookings(context: BrowserContext) {
   await context.route("**/api/kavin/**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname.replace("/api/kavin", "");
+    if (path === "/spaces" && route.request().method() === "GET") {
+      await route.fulfill({ json: spaces });
+      return;
+    }
     const quotePath = path.match(/^\/spaces\/([^/]+)\/quote$/);
     if (quotePath && route.request().method() === "POST") {
       const space = spaces.find(({ id }) => id === quotePath[1]);
