@@ -23,13 +23,14 @@ The owner is a junior front-end developer who is still learning. Always reply in
 - The API uses Gregorian dates `YYYY-MM-DD` and times `HH:mm` in Asia/Tehran. The UI shows Jalali dates.
 
 ## Status
-Done: shared API client, login/signup against Django, session cookie, navbar login state, spaces list/detail from API, availability + booking + my-bookings from API, home page from API.
-Done: Playwright tests use mocked API responses; booking flows are in tests/bookings-flow.spec.ts. Removed the obsolete localStorage store, availability helper, clock hook, and their dedicated test. Removed unused bookings and fetchSpaces exports from lib/data.ts; shared types and the spaces catalog remain.
+Done: shared API client, Django login/signup, HttpOnly cookie, navbar session state, API-backed home/list/detail, availability, booking, my-bookings and cancellation.
+Done: server quote with loading/error/retry and stale-response protection; server-side filters synchronized with URL; booking images from the spaces API with fallback.
+Done: obsolete local booking helpers removed. lib/data.ts retains shared types and the sample catalog for design-system and tests. Forgot-password explicitly reports unavailable service without fake success.
+Tests: default mocked Playwright suite has 35 discovered tests; separate real-Django integration suite uses disposable SQLite and has 8 discovered tests. Discovery is not a passing run; see QA.md for evidence and limits.
 Remaining:
-- app/design-system/page.tsx still imports spaces from lib/data.ts.
-- Filters on /spaces still run in the browser; the API supports type, minCapacity, maxPrice, search, ordering.
-- /spaces/{id}/quote/ is unused; the price preview is computed on the frontend.
-- Forgot-password has no backend endpoint.
+- Forgot-password has no backend endpoint; coordinate with Saeed.
+- My-bookings fetches at most 100 records; inactive spaces may have no catalog image.
+- Final device/accessibility/timezone checks and HTTPS deployment verification remain. Local tests do not certify production concurrency or security.
 
 ## Rules
 - One new branch per task (`feat/...`, `fix/...`, `chore/...`). Never commit directly to `main`. Small commits. The owner opens the pull requests herself.
