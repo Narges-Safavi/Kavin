@@ -1,6 +1,31 @@
 import { test, expect } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 
+test("forgot password explains availability and links back to login", async ({
+  page,
+}) => {
+  const submissions: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.url().includes("/api/auth/"))
+      submissions.push(request.url());
+  });
+  await page.goto("/forgot-password");
+  await expect(
+    page.getByRole("heading", { name: "رمزت را فراموش کرده‌ای؟" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("بازیابی رمز عبور فعلاً در دسترس نیست.", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("form")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "درخواست ثبت شد" }),
+  ).toHaveCount(0);
+  await page.getByRole("link", { name: "بازگشت به ورود", exact: true }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByLabel("نام کاربری")).toBeVisible();
+  expect(submissions).toEqual([]);
+});
+
 test("invalid login shows the API error and stays on login", async ({
   page,
 }) => {
@@ -18,12 +43,10 @@ test("invalid login shows the API error and stays on login", async ({
   await page.getByLabel("رمز عبور", { exact: true }).fill(randomUUID());
   await page.getByRole("button", { name: "ورود", exact: true }).click();
   await expect(
-    page
-      .getByRole("alert")
-      .filter({
-        hasText:
-          /نام کاربری یا رمز عبور اشتباه است|این بازه همین الان رزرو شد|لغو رزرو موقتاً ممکن نیست/,
-      }),
+    page.getByRole("alert").filter({
+      hasText:
+        /نام کاربری یا رمز عبور اشتباه است|این بازه همین الان رزرو شد|لغو رزرو موقتاً ممکن نیست/,
+    }),
   ).toContainText("نام کاربری یا رمز عبور اشتباه است");
   await expect(page).toHaveURL(/\/login$/);
 });

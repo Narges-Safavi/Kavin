@@ -1,9 +1,5 @@
 import { apiRequest } from "@/lib/api";
-import type {
-  ForgotPasswordFormData,
-  LoginFormData,
-  SignupFormData,
-} from "@/lib/schemas";
+import type { LoginFormData, SignupFormData } from "@/lib/schemas";
 
 export type AuthUser = {
   id: string;
@@ -47,11 +43,4 @@ export async function fetchCurrentUser(): Promise<AuthUser | null> {
     baseUrl: LOCAL,
   });
   return result.user;
-}
-
-// بک‌اند فعلاً بازیابی رمز ندارد؛ این تابع دست‌نخورده می‌ماند.
-export async function requestPasswordReset(
-  data: ForgotPasswordFormData,
-): Promise<void> {
-  void data;
 }
