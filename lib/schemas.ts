@@ -81,8 +81,3 @@ export const signupSchema = z
     path: ["confirmPassword"],
   });
 export type SignupFormData = z.infer<typeof signupSchema>;
-
-export const forgotPasswordSchema = z.object({
-  email: z.string().email("لطفا ایمیل معتبر وارد کنید."),
-});
-export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
