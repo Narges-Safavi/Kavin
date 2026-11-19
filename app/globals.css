@@ -2274,5 +2274,49 @@ form.card > button:last-child {
 /* نام کاربری کنار دکمه‌ی خروج در ناوبار */
 .nav-user {
   font-weight: 600;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.nav-bar {
+  flex-wrap: wrap;
+  column-gap: 16px;
+  row-gap: 8px;
+}
+.nav-account {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 12px;
+}
+.nav-account:empty {
+  display: none;
+}
+.nav-account .nav-user {
+  max-width: 180px;
+}
+@media (max-width: 1050px) {
+  .nav-account {
+    flex-basis: 100%;
+    padding-bottom: 8px;
+  }
+}
+@media (max-width: 600px) {
+  .nav-links {
+    top: 100%;
+  }
+  .nav-bar {
+    column-gap: 8px;
+  }
+  .nav-account .nav-user {
+    flex: 1;
+    max-width: none;
+  }
+  .nav-account .button {
+    min-height: 40px;
+    padding: 6px 12px;
+  }
 }
