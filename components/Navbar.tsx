@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Icon from "./ui/Icon";
 import { fetchCurrentUser, logout, type AuthUser } from "@/lib/auth";
 
@@ -21,6 +21,12 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const navigation = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (open)
+      navigation.current?.querySelector<HTMLAnchorElement>("a")?.focus();
+  }, [open]);
   // undefined: هنوز نمی‌دانیم، null: مهمان، AuthUser: وارد شده
   const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
   const [retry, setRetry] = useState(0);
@@ -71,7 +77,16 @@ export default function Navbar() {
     !checking && !failed && user === null ? [...links, ...guestLinks] : links;
 
   return (
-    <header className="site-header">
+    <header
+      className="site-header"
+      onKeyDown={(event) => {
+        if (open && event.key === "Escape") {
+          event.preventDefault();
+          setOpen(false);
+          menuButton.current?.focus();
+        }
+      }}
+    >
       <div className="container nav-bar">
         <Link className="brand" href="/" aria-label="کاوین، صفحه اصلی">
           <span className="brand-symbol">
@@ -84,6 +99,7 @@ export default function Navbar() {
           </span>
         </Link>
         <nav
+          ref={navigation}
           id="main-navigation"
           aria-label="ناوبری اصلی"
           className={`nav-links ${open ? "is-open" : ""}`}
@@ -115,6 +131,7 @@ export default function Navbar() {
           <button
             type="button"
             className="icon-button mobile-menu"
+            ref={menuButton}
             aria-label={open ? "بستن منو" : "باز کردن منو"}
             aria-expanded={open}
             aria-controls="main-navigation"
