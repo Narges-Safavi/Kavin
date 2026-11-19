@@ -110,7 +110,7 @@ test("failed logout preserves account and can be retried", async ({ page }) => {
   await page.route("**/api/auth/logout", (route) =>
     route.fulfill(fails ? { status: 503, json: {} } : { status: 204 }),
   );
-  await page.goto("/");
+  await page.goto("/about");
   const logout = page.getByRole("button", { name: "خروج", exact: true });
   await logout.click();
   await expect(page.locator("header").getByRole("alert")).toContainText(
@@ -120,4 +120,6 @@ test("failed logout preserves account and can be retried", async ({ page }) => {
   fails = false;
   await logout.click();
   await expect(page.locator(".nav-user")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator(".hero h1")).toBeVisible();
 });
