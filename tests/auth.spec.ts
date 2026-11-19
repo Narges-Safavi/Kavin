@@ -73,6 +73,12 @@ test("successful login updates navigation and logout clears it", async ({
   await page.getByRole("button", { name: "ورود", exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByText(user.username, { exact: true })).toBeVisible();
+  await page.goto("/about");
   await page.getByRole("button", { name: "خروج", exact: true }).click();
   await expect(page.getByText(user.username, { exact: true })).toHaveCount(0);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator(".hero h1")).toBeVisible();
+  await expect(
+    page.locator("header").getByRole("link", { name: "ورود", exact: true }),
+  ).toBeVisible();
 });

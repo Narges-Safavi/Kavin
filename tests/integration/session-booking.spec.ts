@@ -76,4 +76,9 @@ test("real Django login, HttpOnly session, booking, cancellation and logout", as
     .toBe(false);
   const denied = await context.request.get("/api/kavin/bookings");
   expect(denied.status()).toBe(401);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator(".hero h1")).toBeVisible();
+  await expect(
+    page.locator("header").getByRole("link", { name: "ورود", exact: true }),
+  ).toBeVisible();
 });
