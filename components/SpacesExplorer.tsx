@@ -27,14 +27,32 @@ export default function SpacesExplorer({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [activeFilters, setActiveFilters] = useOptimistic(filters);
-  const [search, setSearch] = useState(filters.search);
+  const [draft, setDraft] = useState<string | null>(null);
+  const search = draft ?? filters.search;
   const [previousSearch, setPreviousSearch] = useState(filters.search);
   if (previousSearch !== filters.search) {
     setPreviousSearch(filters.search);
-    setSearch(filters.search);
+    // A completed request must not replace text typed while it was loading.
+    if (
+      draft !== null &&
+      readSpaceFilters(new URLSearchParams({ search: draft })).search ===
+        filters.search
+    ) {
+      setDraft(null);
+    }
   }
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), [filters]);
+  useEffect(() => {
+    const restoreHistory = () => {
+      clearTimeout(timer.current);
+      setDraft(null);
+    };
+    window.addEventListener("popstate", restoreHistory);
+    return () => {
+      clearTimeout(timer.current);
+      window.removeEventListener("popstate", restoreHistory);
+    };
+  }, []);
   const { type, capacity, sort } = activeFilters;
   function navigate(change: Partial<SpaceFilters>) {
     clearTimeout(timer.current);
@@ -48,12 +66,12 @@ export default function SpacesExplorer({
     });
   }
   function updateSearch(value: string) {
-    setSearch(value);
+    setDraft(value);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => navigate({ search: value }), 350);
   }
   const reset = () => {
-    setSearch("");
+    setDraft(null);
     navigate({ search: "", type: "all", capacity: 0, sort: "recommended" });
   };
   return (
@@ -76,7 +94,6 @@ export default function SpacesExplorer({
               id="search"
               placeholder="نام فضا را جستجو کن..."
               value={search}
-              disabled={pending}
               maxLength={150}
               onChange={(e) => updateSearch(e.target.value)}
             />
