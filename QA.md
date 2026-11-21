@@ -1,5 +1,10 @@
 # گزارش بررسی نسخه تحویلی کاوین
 
+## به‌روزرسانی وابستگی‌ها — ۲۰۲۶/۱۱/۲۱
+
+Next.js و eslint-config-next به نسخهٔ 16.4.6 ارتقا یافتند و اصلاح‌های باقی‌مانده با npm audit fix انجام شدند. audit صفر مورد گزارش کرد؛ lint، build و ۴۲ تست Mock موفق شدند. اجرای اول Django شامل ۸ موفق و یک شکست ECONNRESET در درخواست رزروها پس از خروج بود. تست تکی سپس موفق شد و اجرای کامل مجدد نیز ۹ تست موفق داشت. علت قطع اتصال اولیه مشخص نشده است. هشدارهای تصویر LCP، نوع ماژول کاتالوگ و پیام‌های Broken pipe مشاهده شدند.
+
+
 ## بررسی پیام قطع جریان پاسخ — ۲۰۲۶/۱۱/۱۹
 
 برنچ `codex/investigate-stream-close` از main با شناسهٔ `f8e2908` ساخته شد. پیام `The destination stream closed early` در کد React Server Components همراه Next، هنگام بسته‌شدن مقصد جریان پاسخ ثبت می‌شود (`react-server-dom-turbopack-server.node.development.js`، رویداد `close`). این پیام به‌تنهایی نشانهٔ خطای Django یا شکست خروج نیست.
